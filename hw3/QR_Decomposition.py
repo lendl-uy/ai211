@@ -5,19 +5,13 @@
 # Coding Challenge 3: QR Decomposition with Column Pivoting
 
 import numpy as np
-import time
 
 EPSILON = 1e-5
-
-def get_mtx_shape(A):
-
-    # Get the mxn shape of the matrix
-    return A.shape[0], A.shape[1]
 
 def rref(A):
 
     # Get the mxn shape of the matrix
-    m, n = get_mtx_shape(A)
+    m, n = A.shape
 
     pivot = 0
 
@@ -70,7 +64,7 @@ def get_rank(A):
     rref_A = rref(A)
 
     # Get the mxn shape of the matrix
-    m, n = get_mtx_shape(A)
+    m, n = A.shape
 
     independent_vec_idx = []
 
@@ -90,7 +84,7 @@ def get_null_space(A, Q, rank, independent_vecs):
     # Get the RREF to determine linearly independent vectors
     rref_A = rref(A)
 
-    m, n = get_mtx_shape(A)
+    m, n = A.shape
                 
     # Get the null space based on the basis and the index of 
     # independent vectors
@@ -109,7 +103,7 @@ def get_null_space(A, Q, rank, independent_vecs):
 def qr_decomposition(A, epsilon=1e-8):
 
     # Get the mxn shape of the matrix
-    m, n = get_mtx_shape(A)
+    m, n = A.shape
     
     # Initialize matrices Q, R, and P
     Q = np.zeros((m, m))
