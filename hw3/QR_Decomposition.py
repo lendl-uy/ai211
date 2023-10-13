@@ -8,7 +8,6 @@ import numpy as np
 import time
 
 EPSILON = 1e-5
-NUM_TESTS = 10000
 
 def get_mtx_shape(A):
 
@@ -65,7 +64,7 @@ def rref(A):
     A = np.around(A, 2) # Limit precision to 2 decimal places
     return A
 
-def get_basis(A):
+def get_rank(A):
     
     # Get the RREF to determine linearly independent vectors
     rref_A = rref(A)
@@ -73,20 +72,20 @@ def get_basis(A):
     # Get the mxn shape of the matrix
     m, n = get_mtx_shape(A)
 
-    leadingOnes = []
+    independent_vec_idx = []
 
     # Get leading ones per row
     for i in range(m):
         for j in range(n):
-            mtx_elem = A[i][j]
+            mtx_elem = rref_A[i, j]
             if float(mtx_elem) == 1.0:
-                leadingOnes.append(j)
+                independent_vec_idx.append(j)
                 break
 
-    return leadingOnes, len(leadingOnes)
+    return len(independent_vec_idx), independent_vec_idx
 
 # TODO: Finish implementing null space calculator
-def get_null_space(A, Q, basis, independent_vecs):
+def get_null_space(A, Q, rank, independent_vecs):
     
     # Get the RREF to determine linearly independent vectors
     rref_A = rref(A)
@@ -119,19 +118,21 @@ def qr_decomposition(A, epsilon=1e-8):
     
     pivot_count = 0
 
-    # Get the basis to determine which vectors to perform Gram-Schmidt 
-    set_of_independent_vecs, basis = get_basis(A.copy())
+    # Get the rank and columns of independent vectors to determine 
+    # which vectors to perform Gram-Schmidt 
+    rank, independent_vec_idx = get_rank(A.copy())
 
-    # If basis is less than number of rows, get the null space of A
-    if basis < m:
+    # If rank is less than number of rows, get the null space of A
+    if rank < m:
+        
         # Get the null space of A and update Q
-        get_null_space(A.copy(), Q, basis, set_of_independent_vecs)
+        get_null_space(A.copy(), Q, rank, independent_vec_idx)
 
     # Perform Gram-Schmidt algorithm for getting orthonormal vectors
-    for col in range(basis):
+    for col in range(rank):
         
         # Skip the algorithm if current column is a dependent vector
-        if col not in set_of_independent_vecs:
+        if col not in independent_vec_idx:
             continue
 
         # Entries of Q only spans the column space of A
@@ -151,7 +152,7 @@ def qr_decomposition(A, epsilon=1e-8):
                 P[:, col], P[:, swap_idx] = P[:, swap_idx], P[:, col].copy()
 
             if abs(mtx_elem) > epsilon:
-                # Obtain projection vector
+                # Obtain projection vector p
                 p = np.zeros(m)
                 for i in range(pivot_count):
                     dot_prod = np.dot(A[:, pivot_count], Q[:, i])
@@ -167,82 +168,89 @@ def qr_decomposition(A, epsilon=1e-8):
 
     return Q, R, P
 
-def main():
-
-    # Initialize matrix A to be decomposed
+def qr_decomposition_of_matrix_will_full_rank():
+    
+    print("---- Running QR decomposition test for matrix with full rank ----")
+    
     A = np.array([[1, 2, 3],
                   [4, 5, 6],
                   [7, 8, 9]]).astype("float")
-    '''
-    A = np.array([[74, -80, 46, 33, 5, -65, 21, 93],
-                  [18, -52, -70, -8, -60, -70, 0, 12],
-                  [87, 59, -21, -33, 19, 38, -32, 82]]).astype("float")
-    '''
-    '''
-    # Random number of rows for testing
-    m = np.random.randint(3, 50)
-    # Random number of cols for testing
-    n = np.random.randint(3, 50)
-    # Randomize entries of matrix A for testing
-    A = np.random.randint(-100, 100, size=(m, n)).astype("float")
-    '''
+    
     # Pass a copy of A instead since Python will modify the original contents of A
     Q, R, P = qr_decomposition(A.copy(), EPSILON)
-
-    print(f"--Below this line are the computed matrices of the decomposition--")
-    print(f"A = {A}\n")
+    
+    print("Results:")
     print(f"P = {P}\n")
     print(f"Q = {Q}\n")
     print(f"R = {R}\n")
-
+    
     # Verification of computed matrices
     AP = A @ P
     QR = Q @ R
-
-    print(f"--Below this line is the verification of the decomposition--")
-    print(f"AP = {AP}\n")
-    print(f"QR = {QR}\n")
-
+    
     # allclose() is used due to loss of precision when performing row-wise operations
     if np.allclose(np.subtract(AP, QR), np.zeros((3, 3), dtype="float"), rtol=1e-3, atol=1e-5):
         print("Decomposition is correct!")
     else:
-        raise Exception("Something went wrong with the decomposition!")
-
-    '''
-    # Perform multiple tests and inspect runtime
-    start = time.time()
+        raise RuntimeError("Something went wrong with the decomposition!")
+    
+def qr_decomposition_of_matrix_will_rank_less_than_columns():
+    
+    print("---- Running QR decomposition test for matrix with rank < columns ----")
+    
+    A = np.array([[1, 2, 3],
+                  [4, 5, 6],
+                  [7, 8, 9]]).astype("float")
+    
+    # Pass a copy of A instead since Python will modify the original contents of A
+    Q, R, P = qr_decomposition(A.copy(), EPSILON)
+    
+    print("Results:")
+    print(f"P = {P}\n")
+    print(f"Q = {Q}\n")
+    print(f"R = {R}\n")
+    
+    # Verification of computed matrices
+    AP = A @ P
+    QR = Q @ R
+    
+    # allclose() is used due to loss of precision when performing row-wise operations
+    if np.allclose(np.subtract(AP, QR), np.zeros((3, 3), dtype="float"), rtol=1e-3, atol=1e-5):
+        print("Decomposition is correct!")
+    else:
+        raise RuntimeError("Something went wrong with the decomposition!")
+    
+def qr_decomposition_random_mtx(NUM_TESTS):
+    
+    print("---- Running QR decomposition tests for random matrix sizes and random entries ----")
+    
     for n in range(NUM_TESTS):
         # Initialize matrix A to be decomposed
-        # Random number of rows for testing
-        m = np.random.randint(3, 50)
-        # Random number of cols for testing
-        n = np.random.randint(3, 50)
-        # Randomize entries of matrix A for testing
+        m = np.random.randint(3, 50) # Random number of rows
+        n = np.random.randint(3, 50) # Random number of columns
         A = np.random.randint(-100, 100, size=(m, n)).astype("float")
 
         # Pass a copy of A instead since Python will modify the original contents of A
         Q, R, P = qr_decomposition(A.copy(), EPSILON)
 
-        # Verification of computed Q, R, and P matrices
-        QRP = np.round(Q @ R @ np.transpose(P))
+        # Verification of computed matrices
+        AP = A @ P
+        QR = Q @ R
 
         # allclose() is used due to loss of precision when performing row-wise operations
-        if np.allclose(np.subtract(A, QRP), np.zeros((m, n), dtype="float"), rtol=1e-3, atol=1e-5):
-            continue
+        if np.allclose(np.subtract(AP, QR), np.zeros((m, n), dtype="float"), rtol=1e-3, atol=1e-5):
             #print("Decomposition is correct!")
+            continue
         else:
-            print(f"A = {A}")
-            print(f"QRP = {QRP}")
-
-            print(f"A = {A}\n")
-            print(f"P = {P}\n")
-            print(f"Q = {Q}\n")
-            print(f"R = {R}\n")
-            raise Exception("Something went wrong with the decomposition!")
-    
+            raise RuntimeError("Something went wrong with the decomposition!")
+        
     print(f"All decomposition tests are correct!")
-    print(f"Runtime for {NUM_TESTS} tests: {time.time()-start} s")
-    '''
+
+def main():
+
+    qr_decomposition_of_matrix_will_full_rank()
+    qr_decomposition_of_matrix_will_rank_less_than_columns()
+    qr_decomposition_random_mtx(1000)
+
 if __name__ == "__main__":
     main()
