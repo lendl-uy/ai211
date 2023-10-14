@@ -58,7 +58,7 @@ def rref(A):
     A = np.around(A, 2) # Limit precision to 2 decimal places
     return A
 
-def get_rank(A):
+def get_rank_and_basis(A):
     
     # Get the RREF to determine linearly independent vectors
     rref_A = rref(A)
@@ -89,7 +89,6 @@ def get_column_norm(Q):
         
     return norm
 
-# TODO: Finish implementing null space calculator
 def get_normalized_null_space(A, Q, independent_vecs, pivot_count):
     
     # Get the RREF to determine linearly independent vectors
@@ -117,7 +116,7 @@ def get_normalized_null_space(A, Q, independent_vecs, pivot_count):
         Q[:, col] = Q[:, col]*1/np.linalg.norm(Q[:, col]) # Normalize the column vector
         pivot_count += 1
                                                
-def qr_decomposition(A, epsilon=1e-8):
+def qr_decomposition(A, epsilon=1e-7):
 
     # Get the mxn shape of the matrix
     m, n = A.shape
@@ -125,16 +124,19 @@ def qr_decomposition(A, epsilon=1e-8):
     # Initializes matrices Q and P
     if m < n:
         Q = np.zeros((m, m))
-        Q = np.zeros((m, n))
     else:
         Q = np.zeros((m, n))
     P = np.eye(n, n)
     
     pivot_count = 0
-
-    # Get the rank and columns of independent vectors to determine 
-    # which vectors to perform Gram-Schmidt 
-    rank, independent_vec_idx = get_rank(A.copy())
+    
+    # Base Case: Check first if A is the zero matrix
+    # If zero matrix, Q = I_m, R is the zero matrix, and P = I_n
+    if np.allclose(A, np.zeros((m, n), dtype="float"), rtol=1e-3, atol=epsilon):
+        return np.identity(m), np.zeros((m, n)), np.identity(n)
+    
+    # Get the rank and basis to determine on which vectors to perform Gram-Schmidt 
+    rank, independent_vec_idx = get_rank_and_basis(A.copy())
         
     # Perform Gram-Schmidt algorithm for getting orthonormal vectors
     for col in range(n):
@@ -148,7 +150,6 @@ def qr_decomposition(A, epsilon=1e-8):
         if np.sum(np.absolute(A[:, col])) < epsilon:
             A_sum = np.sum(np.absolute(A), axis=0)
             swap_idx = col+np.where(A_sum == np.max(A_sum[:, col:]))[0][0]
-            print(f"swap_idx = {swap_idx}")
             A[:, col], A[:, swap_idx] = A[:, swap_idx], A[:, col].copy()
             P[:, col], P[:, swap_idx] = P[:, swap_idx], P[:, col].copy()
 
