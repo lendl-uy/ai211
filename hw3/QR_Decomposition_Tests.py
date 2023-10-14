@@ -86,7 +86,7 @@ def qr_decomposition_of_nonsquare_matrix_with_columns_greater_than_rows():
     
 def qr_decomposition_random_mtx(NUM_TESTS):
     
-    print("---- Running QR decomposition tests for random matrix sizes and random entries ----")
+    print(f"---- Running {NUM_TESTS} QR decomposition tests for random matrix sizes and random entries ----")
     
     for n in range(NUM_TESTS):
         # Initialize matrix A to be decomposed
@@ -101,17 +101,17 @@ def qr_decomposition_random_mtx(NUM_TESTS):
         AP = A @ P
         QR = Q @ R
 
-        verify_qr(A, Q, R, P)
+        verify_qr(A, Q, R, P, suppress_success_flag=True)
         
     print(f"All decomposition tests are correct!")
 
 def main():
 
-    #qr_decomposition_of_square_matrix_full_rank()
-    #qr_decomposition_of_square_matrix_rank_deficient()
+    qr_decomposition_of_square_matrix_full_rank()
+    qr_decomposition_of_square_matrix_rank_deficient()
     qr_decomposition_of_nonsquare_matrix_with_rows_greater_than_columns()
-    #qr_decomposition_of_nonsquare_matrix_with_columns_greater_than_rows()
-    #qr_decomposition_random_mtx(1000)
+    qr_decomposition_of_nonsquare_matrix_with_columns_greater_than_rows()
+    qr_decomposition_random_mtx(1000)
 
 if __name__ == "__main__":
     main()

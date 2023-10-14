@@ -62,7 +62,7 @@ def get_rank(A):
     
     # Get the RREF to determine linearly independent vectors
     rref_A = rref(A)
-
+    
     # Get the mxn shape of the matrix
     m, n = A.shape
 
@@ -78,39 +78,56 @@ def get_rank(A):
 
     return len(independent_vec_idx), independent_vec_idx
 
+def get_column_norm(Q):
+    
+    norm = []
+    
+    m, n = Q.shape
+    
+    for col in range(n):
+        norm.append(np.linalg.norm(Q[:, col]))
+        
+    return norm
 
 # TODO: Finish implementing null space calculator
-def get_null_space(A, Q, rank, independent_vecs):
+def get_normalized_null_space(A, Q, independent_vecs, pivot_count):
     
     # Get the RREF to determine linearly independent vectors
     rref_A = rref(A)
 
-    m, n = A.shape
-                
+    m, n = rref_A.shape
+
     # Get the null space based on the basis and the index of 
     # independent vectors
-    for col in range(m):
+    for col in range(n):
+        if pivot_count >= m:
+            break
         
-        if col not in independent_vecs:
+        if col in independent_vecs:
+            continue
             
-            for row in range(m):
-                if row not in independent_vecs:
-                    Q[row, col] = -1
-                elif row in independent_vecs and row <= col:
-                    Q[row, col] = rref_A[row, col]
-                else:
-                    Q[row, col] = 0
-   
-    print(f"Q after null space = {Q}")
-                                            
+        for row in range(m):
+            if row not in independent_vecs and row <= (n-1):
+                Q[row, pivot_count] = -1
+            elif row in independent_vecs and row <= (n-1):
+                Q[row, pivot_count] = rref_A[row, col]
+            else:
+                Q[row, pivot_count] = 0
+                    
+        Q[:, col] = Q[:, col]*1/np.linalg.norm(Q[:, col]) # Normalize the column vector
+        pivot_count += 1
+                                               
 def qr_decomposition(A, epsilon=1e-8):
 
     # Get the mxn shape of the matrix
     m, n = A.shape
-    print(f"A = {A}")
-    # Initialize matrices Q, R, and P
-    Q = np.zeros((m, m))
-    R = np.zeros((m, n))
+    
+    # Initializes matrices Q and P
+    if m < n:
+        Q = np.zeros((m, m))
+        Q = np.zeros((m, n))
+    else:
+        Q = np.zeros((m, n))
     P = np.eye(n, n)
     
     pivot_count = 0
@@ -118,51 +135,47 @@ def qr_decomposition(A, epsilon=1e-8):
     # Get the rank and columns of independent vectors to determine 
     # which vectors to perform Gram-Schmidt 
     rank, independent_vec_idx = get_rank(A.copy())
-
-    # Perform Gram-Schmidt algorithm for getting orthonormal vectors
-    for col in range(rank):
         
-        # Skip the algorithm if current column is a dependent vector
-        if col not in independent_vec_idx:
-            continue
+    # Perform Gram-Schmidt algorithm for getting orthonormal vectors
+    for col in range(n):
 
         # Entries of Q only spans the column space of A
-        if col >= m:
+        if pivot_count >= m:
             break
         
         # Perform column pivoting if column vector entries are all zeros
         # Swap with column with the highest absolute value of entries
-        if np.sum(A[:, col]) < epsilon:
-            col_vec = np.absolute(A[:, col])
-            swap_idx = col+np.where(col_vec == np.max(col_vec))[0][0]
+        if np.sum(np.absolute(A[:, col])) < epsilon:
+            A_sum = np.sum(np.absolute(A), axis=0)
+            swap_idx = col+np.where(A_sum == np.max(A_sum[:, col:]))[0][0]
+            print(f"swap_idx = {swap_idx}")
             A[:, col], A[:, swap_idx] = A[:, swap_idx], A[:, col].copy()
             P[:, col], P[:, swap_idx] = P[:, swap_idx], P[:, col].copy()
 
         # Obtain projection vector p
         p = np.zeros(m)
         for i in range(pivot_count):
-            dot_prod = np.dot(A[:, pivot_count], Q[:, i])
+            dot_prod = np.dot(A[:, col], Q[:, i])
             p += dot_prod*Q[:, i]
 
-        e = A[:, pivot_count] - p # Obtain orthogonal vector e = a - p
+        e = A[:, col] - p # Obtain orthogonal vector e = a - p
+        
+        # If e is the zero vector, skip
+        if (np.allclose(e, np.zeros(m, dtype="float"), rtol=1e-3, atol=1e-5)):
+            continue
         q = e*1/np.linalg.norm(e) # Normalize e to get q_i
         Q[:, pivot_count] = q
         pivot_count += 1
-        break
+
+    # If Q is column deficient, get the null space of A to obtain additional columns
+    if pivot_count < Q.shape[1]:
+        get_normalized_null_space(A.copy(), Q, independent_vec_idx, pivot_count)
     
-    column_norm = get_column_norm(A.copy())
-
-    # If rank is less than number of columns, get the null space of A
-    if rank < n:
-        
-        # Get the null space of A and update Q
-        get_null_space(A.copy(), Q, rank, independent_vec_idx)
-
     R = np.transpose(Q) @ A
 
     return Q, R, P
 
-def verify_qr(A, Q, R, P):
+def verify_qr(A, Q, R, P, suppress_success_flag=False):
     
     # Verification of computed matrices
     AP = A @ P
@@ -172,6 +185,7 @@ def verify_qr(A, Q, R, P):
     
     # allclose() is used due to loss of precision when performing row-wise operations
     if np.allclose(np.subtract(AP, QR), np.zeros((m, n), dtype="float"), rtol=1e-3, atol=1e-5):
-        print("Decomposition is correct!")
+        if not suppress_success_flag:
+            print("Decomposition is correct!")
     else:
         raise RuntimeError("The decomposition is incorrect!")
