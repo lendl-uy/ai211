@@ -78,17 +78,6 @@ def get_rank(A):
 
     return len(independent_vec_idx), independent_vec_idx
 
-def get_column_norm(Q):
-    
-    norm = []
-    
-    m, n = Q.shape
-    
-    for col in range(n):
-        norm.append(np.linalg.norm(Q[:, col]))
-        
-    print(f"norm = {norm}")
-    return norm
 
 # TODO: Finish implementing null space calculator
 def get_null_space(A, Q, rank, independent_vecs):
