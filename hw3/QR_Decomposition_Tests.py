@@ -6,6 +6,26 @@
 
 from QR_Decomposition import *
 
+def qr_decomposition_of_zero_matrix():
+    
+    print("---- Running QR decomposition test for zero matrix ----")
+    
+    A = np.array([[0, 0, 0],
+                  [0, 0, 0],
+                  [0, 0, 0],
+                  [0, 0, 0],
+                  [0, 0, 0]]).astype("float")
+    
+    # Pass a copy of A instead since Python will modify the original contents of A
+    Q, R, P = qr_decomposition(A.copy(), EPSILON)
+    
+    print("Results:")
+    print(f"P = {P}\n")
+    print(f"Q = {Q}\n")
+    print(f"R = {R}\n")
+    
+    verify_qr(A, Q, R, P)
+
 def qr_decomposition_of_square_matrix_full_rank():
     
     print("---- Running QR decomposition test for square matrix with full rank ----")
@@ -90,8 +110,8 @@ def qr_decomposition_random_mtx(NUM_TESTS):
     
     for n in range(NUM_TESTS):
         # Initialize matrix A to be decomposed
-        m = np.random.randint(3, 50) # Random number of rows
-        n = np.random.randint(3, 50) # Random number of columns
+        m = np.random.randint(3, 100) # Random number of rows
+        n = np.random.randint(3, 100) # Random number of columns
         A = np.random.randint(-100, 100, size=(m, n)).astype("float")
 
         # Pass a copy of A instead since Python will modify the original contents of A
@@ -107,6 +127,7 @@ def qr_decomposition_random_mtx(NUM_TESTS):
 
 def main():
 
+    qr_decomposition_of_zero_matrix()
     qr_decomposition_of_square_matrix_full_rank()
     qr_decomposition_of_square_matrix_rank_deficient()
     qr_decomposition_of_nonsquare_matrix_with_rows_greater_than_columns()
