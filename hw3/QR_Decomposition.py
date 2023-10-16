@@ -89,32 +89,47 @@ def get_column_norm(Q):
         
     return norm
 
-def get_normalized_null_space(A, Q, independent_vecs, pivot_count):
+def get_normalized_null_space(mtx):
     
-    # Get the RREF to determine linearly independent vectors
-    rref_A = rref(A)
-
-    m, n = rref_A.shape
-
-    # Get the null space based on the basis and the index of 
-    # independent vectors
+    m, n = mtx.shape
+    
+    if m < n:
+        null_space = np.zeros(n)
+    else:
+        null_space = np.zeros(m)
+    
+    # Get the RREF to solve for null space
+    mtx_rref = rref(mtx.copy())
+    
+    # Extract indices of independent vectors to be used as 
+    # reference for calculations
+    rank, independent_vecs = get_rank_and_basis(mtx.copy())
+    
+    pivot_found = False
+    
+    # Get the null space of the given matrix
     for col in range(n):
-        if pivot_count >= m:
-            break
         
         if col in independent_vecs:
             continue
             
-        for row in range(m):
-            if row not in independent_vecs and row <= (n-1):
-                Q[row, pivot_count] = -1
-            elif row in independent_vecs and row <= (n-1):
-                Q[row, pivot_count] = rref_A[row, col]
+        for row in range(len(null_space)):
+            if row not in independent_vecs and row <= (m-1):
+                if not pivot_found:
+                    null_space[row] = -1
+                    pivot_found = True
+                else:
+                    null_space[row] = 0
+            elif row in independent_vecs and row <= (m-1):
+                null_space[row] = mtx_rref[row, col]
             else:
-                Q[row, pivot_count] = 0
-                    
-        Q[:, col] = Q[:, col]*1/np.linalg.norm(Q[:, col]) # Normalize the column vector
-        pivot_count += 1
+                null_space[row] = 0     
+        print(f"null_space = {null_space}")
+        null_space = null_space*1/np.linalg.norm(null_space) # Normalize the column vector
+        break
+    
+    # Return a defensive copy to avoid issues
+    return null_space.copy()
                                                
 def qr_decomposition(A, epsilon=1e-7):
 
@@ -137,19 +152,31 @@ def qr_decomposition(A, epsilon=1e-7):
     
     # Get the rank and basis to determine on which vectors to perform Gram-Schmidt 
     rank, independent_vec_idx = get_rank_and_basis(A.copy())
-        
+
     # Perform Gram-Schmidt algorithm for getting orthonormal vectors
     for col in range(n):
-
+        
         # Entries of Q only spans the column space of A
-        if pivot_count >= m:
+        if pivot_count >= m or pivot_count == rank:
             break
         
         # Perform column pivoting if column vector entries are all zeros
         # Swap with column with the highest absolute value of entries
-        if np.sum(np.absolute(A[:, col])) < epsilon:
-            A_sum = np.sum(np.absolute(A), axis=0)
-            swap_idx = col+np.where(A_sum == np.max(A_sum[:, col:]))[0][0]
+        if np.linalg.norm(A[:, col]) < epsilon:
+            
+            # Get the column with the highest norm
+            A_cols_norm = np.linalg.norm(np.absolute(A[:, col:]), axis=0)
+            max_col_vec = np.max(A_cols_norm[col:])
+            
+            # If norm of column vector with max value is ~zero, stop performing Gram-Schmidt
+            # Else if current vector has the highest norm, continue iteration
+            if np.linalg.norm(max_col_vec) < epsilon:
+                break
+            elif np.linalg.norm(max_col_vec) == np.linalg.norm(A[:, col]):
+                continue
+            swap_idx = col+np.where(A_cols_norm == max_col_vec)[0][0]
+            
+            # Swap columns
             A[:, col], A[:, swap_idx] = A[:, swap_idx], A[:, col].copy()
             P[:, col], P[:, swap_idx] = P[:, swap_idx], P[:, col].copy()
 
@@ -168,10 +195,13 @@ def qr_decomposition(A, epsilon=1e-7):
         Q[:, pivot_count] = q
         pivot_count += 1
 
-    # If Q is column deficient, get the null space of A to obtain additional columns
+    # If Q is column deficient, get the null space of Q^T to obtain additional columns
     if pivot_count < Q.shape[1]:
-        get_normalized_null_space(A.copy(), Q, independent_vec_idx, pivot_count)
-    
+        columns_to_add = Q.shape[1] - pivot_count
+        for i in range(columns_to_add):
+            null_space = get_normalized_null_space(np.transpose(Q))
+            Q[:, pivot_count+i] = null_space
+
     R = np.transpose(Q) @ A
 
     return Q, R, P
