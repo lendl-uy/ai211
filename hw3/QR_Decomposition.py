@@ -124,7 +124,7 @@ def get_normalized_null_space(mtx):
                 null_space[row] = mtx_rref[row, col]
             else:
                 null_space[row] = 0     
-        print(f"null_space = {null_space}")
+
         null_space = null_space*1/np.linalg.norm(null_space) # Normalize the column vector
         break
     
