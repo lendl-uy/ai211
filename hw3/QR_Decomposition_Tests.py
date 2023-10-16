@@ -20,6 +20,7 @@ def qr_decomposition_of_zero_matrix():
     Q, R, P = qr_decomposition(A.copy(), EPSILON)
     
     print("Results:")
+    print(f"A = {A}\n")
     print(f"P = {P}\n")
     print(f"Q = {Q}\n")
     print(f"R = {R}\n")
@@ -38,6 +39,7 @@ def qr_decomposition_of_matrix_with_all_zero_columns_except_last_column():
     Q, R, P = qr_decomposition(A.copy(), EPSILON)
     
     print("Results:")
+    print(f"A = {A}\n")
     print(f"P = {P}\n")
     print(f"Q = {Q}\n")
     print(f"R = {R}\n")
@@ -56,6 +58,7 @@ def qr_decomposition_of_square_matrix_full_rank():
     Q, R, P = qr_decomposition(A.copy(), EPSILON)
     
     print("Results:")
+    print(f"A = {A}\n")
     print(f"P = {P}\n")
     print(f"Q = {Q}\n")
     print(f"R = {R}\n")
@@ -74,6 +77,7 @@ def qr_decomposition_of_square_matrix_rank_deficient():
     Q, R, P = qr_decomposition(A.copy(), EPSILON)
     
     print("Results:")
+    print(f"A = {A}\n")
     print(f"P = {P}\n")
     print(f"Q = {Q}\n")
     print(f"R = {R}\n")
@@ -94,6 +98,7 @@ def qr_decomposition_of_nonsquare_matrix_with_rows_greater_than_columns():
     Q, R, P = qr_decomposition(A.copy(), EPSILON)
     
     print("Results:")
+    print(f"A = {A}\n")
     print(f"P = {P}\n")
     print(f"Q = {Q}\n")
     print(f"R = {R}\n")
@@ -112,6 +117,7 @@ def qr_decomposition_of_nonsquare_matrix_with_columns_greater_than_rows():
     Q, R, P = qr_decomposition(A.copy(), EPSILON)
     
     print("Results:")
+    print(f"A = {A}\n")
     print(f"P = {P}\n")
     print(f"Q = {Q}\n")
     print(f"R = {R}\n")
@@ -126,7 +132,7 @@ def qr_decomposition_random_mtx(NUM_TESTS):
     
     print(f"---- Running {NUM_TESTS} QR decomposition tests for random matrix sizes and random entries ----")
     
-    for n in range(NUM_TESTS):
+    for i in range(NUM_TESTS):
         # Initialize matrix A to be decomposed
         m = np.random.randint(3, 100) # Random number of rows
         n = np.random.randint(3, 100) # Random number of columns
@@ -151,7 +157,7 @@ def main():
     qr_decomposition_of_square_matrix_rank_deficient()
     qr_decomposition_of_nonsquare_matrix_with_rows_greater_than_columns()
     qr_decomposition_of_nonsquare_matrix_with_columns_greater_than_rows()
-    qr_decomposition_random_mtx(1000)
+    qr_decomposition_random_mtx(2000)
 
 if __name__ == "__main__":
     main()
