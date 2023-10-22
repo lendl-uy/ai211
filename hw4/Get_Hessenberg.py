@@ -8,8 +8,6 @@
 
 import numpy as np
 
-EPSILON = 1e-5
-
 def get_hessenberg_matrix(A):
         
     rows, cols = A.shape # Get the number of rows "m" and columns "n"
