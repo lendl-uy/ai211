@@ -4,8 +4,9 @@
 
 # Coding Challenge 4: Compute Hessenberg Matrix of a Square Matrix
 
+# Useful reference for algorithm: https://www.youtube.com/watch?v=t_bj3V9Ubac
+
 import numpy as np
-import scipy as sp
 
 EPSILON = 1e-5
 
