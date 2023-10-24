@@ -62,7 +62,8 @@ def verify_hessenberg_matrix(A, Hess, H, suppress_success_flag=False):
     else:
         H_Hess_H = H @ Hess @ np.linalg.inv(H)
         
-    # allclose() is used due to loss of precision when performing row-wise operations
+    # allclose() is used due to tendency of numpy to introduce negative sign to zeros
+    # and -0.0 != 0.0 by convention
     if np.allclose(np.subtract(A, H_Hess_H), np.zeros((rows, cols), dtype="float"), 
                    rtol=1e-3, atol=1e-5):
         if not suppress_success_flag:
