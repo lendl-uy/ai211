@@ -15,6 +15,13 @@ def get_hessenberg_matrix(A):
     # Catch non-square matrix inputs
     if rows != cols:
         raise ValueError("Input matrix is not a square!")
+
+    # Catch zero matrix
+    # allclose() is used due to tendency of numpy to introduce negative sign to zeros
+    # and -0.0 != 0.0 by convention
+    zero_mtx = np.zeros((rows, cols))
+    if np.allclose(np.subtract(A, zero_mtx), zero_mtx, rtol=1e-3, atol=1e-5):
+        return np.zeros((rows, cols)), np.zeros((rows, cols))
     
     Hess = A.copy() # Get a copy of A so as not to mutate contents of A
     H = np.identity(rows) # Initialize Householder matrix
@@ -39,20 +46,30 @@ def get_hessenberg_matrix(A):
         H = H @ H_temp # Update the Householder matrix, i.e. H = H_n @ H_n-1 ... @ H_1
         
     Hess = np.around(Hess, 7) # Round of entries of Hess to filter out floating point errors
-       
+
     return Hess, H
 
 
 def verify_hessenberg_matrix(A, Hess, H, suppress_success_flag=False):
 
-    m, n = A.shape
+    rows, cols = A.shape
     
     # Verification of computed Hessenberg matrix
-    HAH = H @ Hess @ np.linalg.inv(H)
+    # Handle edge case when input matrix is the zero matrix
+    zero_mtx = np.zeros((rows, cols))
+    if np.allclose(np.subtract(A, zero_mtx), zero_mtx, rtol=1e-3, atol=1e-5):
+        H_Hess_H = H @ Hess @ H
+    else:
+        H_Hess_H = H @ Hess @ np.linalg.inv(H)
         
     # allclose() is used due to loss of precision when performing row-wise operations
-    if np.allclose(np.subtract(A, HAH), np.zeros((m, n), dtype="float"), rtol=1e-3, atol=1e-5):
+    if np.allclose(np.subtract(A, H_Hess_H), np.zeros((rows, cols), dtype="float"), 
+                   rtol=1e-3, atol=1e-5):
         if not suppress_success_flag:
             print("Computed Hessenberg matrix is correct!")
     else:
+        print(f"A = {A}\n")
+        print(f"H @ Hess @ H^-1 = {H_Hess_H}")
+        print(f"Hess = {Hess}\n")
+        print(f"H = {H}\n")
         raise RuntimeError("Computed Hessenberg matrix is incorrect!")
