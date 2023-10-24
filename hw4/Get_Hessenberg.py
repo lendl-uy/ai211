@@ -30,13 +30,18 @@ def get_hessenberg_matrix(A):
     # Final 2x2 submatrix is already in its upper Hessenberg matrix
     for i in range(cols-2):
         mtx_col = Hess[:, i]
-        x = mtx_col[i+1:] # Get the sub-row vector x
+        x = mtx_col[i+1:] # Get the sub-row vector x        
         u = np.zeros(x.size)
         u[0] = -np.sign(x[0])*np.linalg.norm(x) # First entry is set to -sgn(x_0)l2_norm(x)
         v = u-x
         v = v[:][np.newaxis].T # Convert v to a 2D numpy array and get its tranpose to convert to column vector
         v_t = v.T # Tranpose of v
-        p = v @ v_t/(v_t @ v)
+        
+        # Handle case when column vector is a zero vector, avoid dividing by zero
+        if np.sum(np.absolute(x)) == 0.0:
+            p = v @ v_t
+        else:
+            p = v @ v_t/(v_t @ v)
         
         # Get the Householder matrix
         H_temp = np.identity(rows) # Initialize the Householder matrix for the current iteration
