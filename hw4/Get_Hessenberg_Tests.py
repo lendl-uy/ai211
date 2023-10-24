@@ -5,6 +5,25 @@
 # Coding Challenge 4 Tests
 
 from Get_Hessenberg import *
+import scipy as sp
+
+def compute_hessenberg_matrix_with_zero_columns():
+    
+    A = np.array([[1, 0, 0, 0],
+                  [2, 0, 0, 0],
+                  [3, 0, 0, 0],
+                  [4, 0, 0, 0]]).astype("float")
+    
+    Hess = sp.linalg.hessenberg(A)
+        
+    Hess, H = get_hessenberg_matrix(A) # H is the Hessenberg matrix    
+    
+    print("Results:")
+    print(f"Hess = {Hess}\n")
+    print(f"H = {H}\n")
+    
+    verify_hessenberg_matrix(A, Hess, H)
+    
 
 def compute_hessenberg_matrix_of_zero_matrix():
     
@@ -58,6 +77,7 @@ def compute_hessenberg_matrix_of_random_mtx_size(NUM_TESTS):
 
 def main():
     
+    compute_hessenberg_matrix_with_zero_columns()
     compute_hessenberg_matrix_of_zero_matrix()
     compute_hessenberg_matrix_of_4x4_matrix()
     compute_hessenberg_matrix_of_random_mtx_size(100000)
