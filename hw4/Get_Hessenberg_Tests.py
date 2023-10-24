@@ -6,6 +6,23 @@
 
 from Get_Hessenberg import *
 
+def compute_hessenberg_matrix_of_zero_matrix():
+    
+    print("---- Computing the Hessenberg matrix of a zero matrix ----")
+    
+    A = np.array([[0, 0, 0, 0],
+                  [0, 0, 0, 0],
+                  [0, 0, 0, 0],
+                  [0, 0, 0, 0]]).astype("float")
+    
+    Hess, H = get_hessenberg_matrix(A) # H is the Hessenberg matrix
+    
+    print("Results:")
+    print(f"Hess = {Hess}\n")
+    print(f"H = {H}\n")
+    
+    verify_hessenberg_matrix(A, Hess, H)
+
 def compute_hessenberg_matrix_of_4x4_matrix():
     
     print("---- Computing the Hessenberg matrix of a 4x4 matrix ----")
@@ -41,8 +58,9 @@ def compute_hessenberg_matrix_of_random_mtx_size(NUM_TESTS):
 
 def main():
     
+    compute_hessenberg_matrix_of_zero_matrix()
     compute_hessenberg_matrix_of_4x4_matrix()
-    compute_hessenberg_matrix_of_random_mtx_size(1000)
+    compute_hessenberg_matrix_of_random_mtx_size(100000)
 
 if __name__ == "__main__":
     main()
