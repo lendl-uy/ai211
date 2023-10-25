@@ -5,7 +5,6 @@
 # Coding Challenge 4 Tests
 
 from Get_Hessenberg import *
-import scipy as sp
 
 def compute_hessenberg_matrix_with_zero_columns():
     
@@ -13,9 +12,7 @@ def compute_hessenberg_matrix_with_zero_columns():
                   [2, 0, 0, 0],
                   [3, 0, 0, 0],
                   [4, 0, 0, 0]]).astype("float")
-    
-    Hess = sp.linalg.hessenberg(A)
-        
+            
     Hess, H = get_hessenberg_matrix(A) # H is the Hessenberg matrix    
     
     print("Results:")
@@ -33,7 +30,7 @@ def compute_hessenberg_matrix_of_zero_matrix():
                   [0, 0, 0, 0],
                   [0, 0, 0, 0],
                   [0, 0, 0, 0]]).astype("float")
-    
+        
     Hess, H = get_hessenberg_matrix(A) # H is the Hessenberg matrix
     
     print("Results:")
@@ -80,7 +77,7 @@ def main():
     compute_hessenberg_matrix_with_zero_columns()
     compute_hessenberg_matrix_of_zero_matrix()
     compute_hessenberg_matrix_of_4x4_matrix()
-    compute_hessenberg_matrix_of_random_mtx_size(100000)
+    compute_hessenberg_matrix_of_random_mtx_size(1000)
 
 if __name__ == "__main__":
     main()
