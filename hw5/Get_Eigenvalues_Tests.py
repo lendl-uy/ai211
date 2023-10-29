@@ -8,13 +8,13 @@ from Get_Eigenvalues import *
 
 def compute_eigenvalues_and_eigenvectors_square_matrix():
     
-    A = np.array([[1, 2, 3],
-                  [4, 5, 6],
-                  [7, 8, 9]]).astype("float")
-            
-    get_eigenvalues(A)    
+    A = np.array([[6, 5, 0],
+                  [5, 1, 4],
+                  [0, 4, 3]]).astype("float")
     
-    print("Results:")
+    get_eigenvalues(A)
+    
+    #print("Results:")
     
 def compute_eigenvalues_and_eigenvectors_of_random_mtx_size(NUM_TESTS):
     
