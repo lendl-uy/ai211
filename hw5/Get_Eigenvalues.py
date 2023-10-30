@@ -7,13 +7,18 @@
 import numpy as np
 import math
 
+MAX_QR_ITERATIONS = 5000
+QR_TOLERANCE = 1e-7
+
 def get_hessenberg_matrix(A):
         
-    rows, cols = A.shape # Get the number of rows "m" and columns "n"
+    rows, cols = A.shape # Get the number of rows and columns of A
     
     # Catch non-square matrix inputs
     if rows != cols:
         raise ValueError("Input matrix is not a square!")
+    elif rows == cols == 2:
+        return A, np.identity(rows)
 
     Hess = A.copy() # Get a copy of A so as not to mutate contents of A
     H = np.identity(rows) # Initialize Householder matrix
@@ -48,7 +53,7 @@ def get_hessenberg_matrix(A):
 
 def givens_rotation(A, i, j):
     
-    rows, cols = A.shape # Get the number of rows "m" and columns "n" of A
+    rows, cols = A.shape # Get the number of rows and columns of A
     
     G = np.eye(rows, cols) # Initialize the Givens rotation matrix
     
@@ -62,34 +67,97 @@ def givens_rotation(A, i, j):
     G[j, i] = b/r
 
     return G
+    
+def qr_via_givens(A):
+    
+    rows, cols = A.shape # Get the number of rows and columns of A
+    
+    Q = np.eye(rows, rows)
+    R = A.copy()
+
+    # Perform Givens rotation on the Hessenberg matrix to get Q and R matrices
+    for i in range(cols-1):
+        subdiagonal_elem = R[i+1, i]
+        if subdiagonal_elem != 0.0:
+            G = givens_rotation(R, i+1, i)
+            R = G @ R
+            Q = Q @ G.T
+        
+    return Q, R
 
 def wilkinson_shift(A):
     
-    rows, cols = A.shape # Get the number of rows "m" and columns "n" of A
-
-def get_eigenvalues(A):
-        
-    rows, cols = A.shape # Get the number of rows "m" and columns "n" of A
+    rows, cols = A.shape # Get the number of rows and columns of A
     
+    # Extract the 2x2 block matrix at the bottom left of the matrix
+    # Compute "estimated eigenvalue" (mu) from this block
+    block = A[rows-2: , cols-2:]
+    a = block[0, 0]
+    b = block[0, 1]
+    c = block[1, 1]
+    l = (a-c)/2
+    mu = c - (np.sign(l)*b**2)/(abs(l) + math.hypot(l, b)) # Shift coefficient
+    
+    return mu
+    
+def get_eigenvalues(A, tol=QR_TOLERANCE):
+        
+    # Convert A to Hessenberg matrix to reduce computational complexity    
     Hess, H = get_hessenberg_matrix(A)
     
-    # Perform Givens rotation on the Hessenberg matrix to set subdiagonal elements to 0
-    for i in range(cols-1):
-        G = givens_rotation(Hess, i+1, i)
-        Hess = G @ Hess
+    rows, cols = Hess.shape # Get the number of rows and columns of Hess
+        
+    iterations = 0
+        
+    # Perform QR algorithm to compute for eigenvalues until 
+    # Schur form is (approximately) achieved
+    while np.linalg.norm(np.diag(Hess, k=-1)) > tol:
+        
+        # Get Wilkinson shift coefficient to speed up convergence
+        mu = wilkinson_shift(Hess)
+        
+        Q, R = qr_via_givens(Hess - mu*np.identity(rows))
+        #Q, R = qr_via_givens(Hess)
+        Hess = R @ Q + mu*np.identity(rows)
+        #Hess = R @ Q
+        iterations += 1
+        #print(f"norm of subdiag = {np.linalg.norm(np.diag(Hess, k=-1))}")
+        if iterations >= MAX_QR_ITERATIONS:
+            raise RuntimeError(f"QR Algorithm was not able to converge for a tolerance of {tol}")
     
-    np.around(Hess, 8) # Remove numerical errors from rational numbers     
-    print(f"Hess = {Hess}")
-    #print(f"H = {H}")
+    # Diagonal entries of the Hessenberg matrix are the eigenvalues of A
+    eigenvalues = np.diag(Hess)
+    # Sort eigenvalues in decreasing order
+    eigenvalues = sorted(eigenvalues.tolist(), reverse=True)
     
+    #print(f"lambda_i = {np.diag(Hess)}")
+    #print(f"iterations = {iterations}")
+    
+    return eigenvalues
+        
 def get_eigenvectors(A):
         
-    rows, cols = A.shape # Get the number of rows "m" and columns "n" of A
+    rows, cols = A.shape # Get the number of rows and columns of A
 
-def verify_eigenvalues(A, suppress_success_flag=False):
+def verify_eigenvalues(A, eigenvalues, suppress_success_flag=False):
+    
+    eigenvalues_from_np = np.linalg.eigvals(A)
+    eigenvalues_from_np = sorted(eigenvalues_from_np.tolist(), reverse=True)
+    
+    # Check if number of eigenvalues match that of numpy
+    if len(eigenvalues_from_np) != len(eigenvalues):
+        raise RuntimeError("The number of eigenvalues is incorrect!")
+    
+    # allclose() is used due to tendency of numpy to introduce negative sign 
+    # to zeros and -0.0 != 0.0 by convention
+    if np.allclose(np.subtract(eigenvalues_from_np, eigenvalues), 
+                   np.zeros(len(eigenvalues_from_np), dtype="float"), 
+                   rtol=1e-3, atol=1e-5):
+        if not suppress_success_flag:
+            print("Computed eigenvalues are correct!")
+    else:
+        raise RuntimeError("Computed eigenvalues are incorrect!")
 
-    rows, cols = A.shape # Get the number of rows "m" and columns "n" of A
+def verify_eigenvectors(A, eigenvectors, suppress_success_flag=False):
 
-def verify_eigenvectors(A, suppress_success_flag=False):
-
-    rows, cols = A.shape # Get the number of rows "m" and columns "n" of A
+    rows, cols = A.shape # Get the number of rows and columns of A

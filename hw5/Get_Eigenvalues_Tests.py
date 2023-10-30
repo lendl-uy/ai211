@@ -12,9 +12,12 @@ def compute_eigenvalues_and_eigenvectors_square_matrix():
                   [5, 1, 4],
                   [0, 4, 3]]).astype("float")
     
-    get_eigenvalues(A)
+    eigenvalues = get_eigenvalues(A)
     
-    #print("Results:")
+    print("Results:")
+    print(f"eigenvalues = {eigenvalues}\n")
+    
+    verify_eigenvalues(A, eigenvalues)
     
 def compute_eigenvalues_and_eigenvectors_of_random_mtx_size(NUM_TESTS):
     
