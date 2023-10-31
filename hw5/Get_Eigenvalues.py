@@ -4,20 +4,41 @@
 
 # Coding Challenge 5: Compute Eigenvalues and Eigenvectors of a Matrix via QR Algorithm
 
+# Useful references:
+# https://faculty.ucmerced.edu/mhyang/course/eecs275/lectures/lecture17.pdf
+# http://web.stanford.edu/class/cme335/lecture5
+
 import numpy as np
 import math
 
-MAX_QR_ITERATIONS = 5000
+MAX_QR_ITERATIONS = 10000
 QR_TOLERANCE = 1e-7
+EPSILON = 1e-7
+
+def is_symmetric(A):
+    
+    return np.array_equal(A, A.T)
+
+def is_hessenberg(A):
+    
+    rows, cols = A.shape # Get the number of rows and columns of A
+    
+    # Search lower triangle below the subdiagonal if all are zeros
+    for col in range(cols-2):
+        for row in range(col+2, rows):
+            mtx_elem = A[row, col]
+            if mtx_elem >= EPSILON:
+                return False
+    return True     
 
 def get_hessenberg_matrix(A):
         
     rows, cols = A.shape # Get the number of rows and columns of A
-    
+
     # Catch non-square matrix inputs
     if rows != cols:
         raise ValueError("Input matrix is not a square!")
-    elif rows == cols == 2:
+    elif (rows == cols == 2) or is_hessenberg(A):
         return A, np.identity(rows)
 
     Hess = A.copy() # Get a copy of A so as not to mutate contents of A
@@ -109,8 +130,11 @@ def get_eigenvalues(A, tol=QR_TOLERANCE):
         
     iterations = 0
         
+    eigenvectors = np.identity(rows)
+        
     # Perform QR algorithm to compute for eigenvalues until 
     # Schur form is (approximately) achieved
+    print(f"Performing QR algorithm ...")
     while np.linalg.norm(np.diag(Hess, k=-1)) > tol:
         
         # Get Wilkinson shift coefficient to speed up convergence
@@ -120,18 +144,21 @@ def get_eigenvalues(A, tol=QR_TOLERANCE):
         #Q, R = qr_via_givens(Hess)
         Hess = R @ Q + mu*np.identity(rows)
         #Hess = R @ Q
+        eigenvectors = eigenvectors @ Q
         iterations += 1
-        #print(f"norm of subdiag = {np.linalg.norm(np.diag(Hess, k=-1))}")
+        #print(f"Iteration #{iterations}")
         if iterations >= MAX_QR_ITERATIONS:
             raise RuntimeError(f"QR Algorithm was not able to converge for a tolerance of {tol}")
     
     # Diagonal entries of the Hessenberg matrix are the eigenvalues of A
     eigenvalues = np.diag(Hess)
-    # Sort eigenvalues in decreasing order
-    eigenvalues = sorted(eigenvalues.tolist(), reverse=True)
     
     #print(f"lambda_i = {np.diag(Hess)}")
     #print(f"iterations = {iterations}")
+    
+    if is_symmetric(A):
+        print(f"A is symmetric! Eigenvectors will also be returned.")
+        return eigenvalues, eigenvectors
     
     return eigenvalues
         
@@ -141,16 +168,19 @@ def get_eigenvectors(A):
 
 def verify_eigenvalues(A, eigenvalues, suppress_success_flag=False):
     
+    eigenvalues_copy = eigenvalues.copy()
+    eigenvalues_copy = sorted(eigenvalues_copy.tolist(), reverse=True)
+    
     eigenvalues_from_np = np.linalg.eigvals(A)
     eigenvalues_from_np = sorted(eigenvalues_from_np.tolist(), reverse=True)
     
     # Check if number of eigenvalues match that of numpy
-    if len(eigenvalues_from_np) != len(eigenvalues):
+    if len(eigenvalues_from_np) != len(eigenvalues_copy):
         raise RuntimeError("The number of eigenvalues is incorrect!")
     
     # allclose() is used due to tendency of numpy to introduce negative sign 
     # to zeros and -0.0 != 0.0 by convention
-    if np.allclose(np.subtract(eigenvalues_from_np, eigenvalues), 
+    if np.allclose(np.subtract(eigenvalues_from_np, eigenvalues_copy), 
                    np.zeros(len(eigenvalues_from_np), dtype="float"), 
                    rtol=1e-3, atol=1e-5):
         if not suppress_success_flag:
@@ -158,6 +188,21 @@ def verify_eigenvalues(A, eigenvalues, suppress_success_flag=False):
     else:
         raise RuntimeError("Computed eigenvalues are incorrect!")
 
-def verify_eigenvectors(A, eigenvectors, suppress_success_flag=False):
-
-    rows, cols = A.shape # Get the number of rows and columns of A
+def verify_eigenvectors(A, eigenvalues, eigenvectors, suppress_success_flag=False):
+    
+    rows, cols = A.shape
+    
+    # Verify correctness of eigenvector by solving (A-λI)v = 0 for each 
+    # eigenvalue and eigenvector
+    for n in range(cols):
+        
+        eigenvector_equation = (A - eigenvalues[n]*np.identity(rows)) @ eigenvectors[:, n]
+        
+        # allclose() is used due to floating point precision errors and tendency of 
+        # numpy to introduce negative sign to zeros and -0.0 != 0.0 by convention
+        if not np.allclose(eigenvector_equation, np.zeros(rows, dtype="float"), 
+                    rtol=1e-5, atol=1e-7):
+            raise RuntimeError("One of the computed eigenvectors is incorrect!")
+        
+    if not suppress_success_flag:
+        print("Computed eigenvectors are correct!")
