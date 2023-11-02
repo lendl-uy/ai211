@@ -49,7 +49,7 @@ def compute_eigenvalues_and_eigenvectors_of_symmetric_matrices_with_random_entri
     
     for i in range(NUM_TESTS):
         # Initialize matrix A to be decomposed
-        m = np.random.randint(3, 7) # Random number of rows
+        m = np.random.randint(3, 50) # Random number of rows
         A = np.random.randint(-10, 10, size=(m, m)).astype("float")
         A = (A+A.T)/2 # Makes the matrix symmetric
         
