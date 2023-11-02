@@ -137,6 +137,9 @@ def wilkinson_shift(A, block_pos=0):
     return µ
     
 def get_eigenvalues(A, tol=QR_TOLERANCE):
+    
+    if A.shape[0] != A.shape[1]:
+        raise ValueError("Input matrix is not a square!") 
         
     # Convert A to Hessenberg matrix to reduce computational complexity    
     Hess, H = get_hessenberg_matrix(A)
