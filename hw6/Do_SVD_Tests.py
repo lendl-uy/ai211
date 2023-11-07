@@ -9,7 +9,7 @@ from Do_SVD import *
 def perform_bidiagonalization_3x3_matrix():
     
     print(f"\n---- Performing Golub-Kahan bidiagonalization on a 3x3 matrix ----\n")
-    
+
     A = np.array([[6, 5, 0],
                   [5, 1, 4],
                   [0, 4, 3]]).astype("float")
@@ -47,7 +47,8 @@ def perform_bidiagonalization_on_matrix_with_random_sizes_and_entries(NUM_TESTS)
     for i in range(NUM_TESTS):
         # Initialize matrix A to be decomposed
         m = np.random.randint(3, 50) # Random number of rows
-        A = np.random.randint(-10, 10, size=(m, m)).astype("float")
+        n = np.random.randint(3, 50) # Random number of cols
+        A = np.random.randint(-10, 10, size=(m, n)).astype("float")
         
         #print(f"A = {A}")
         
@@ -64,7 +65,8 @@ def perform_tridiagonalization_on_matrix_with_random_sizes_and_entries(NUM_TESTS
     for i in range(NUM_TESTS):
         # Initialize matrix A to be decomposed
         m = np.random.randint(3, 50) # Random number of rows
-        A = np.random.randint(-10, 10, size=(m, m)).astype("float")
+        n = np.random.randint(3, 50) # Random number of cols
+        A = np.random.randint(-10, 10, size=(m, n)).astype("float")
         
         #print(f"A = {A}")
         
