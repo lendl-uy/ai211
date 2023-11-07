@@ -10,7 +10,6 @@
 
 import numpy as np
 import math
-import scipy as sp
 
 EPSILON = 1e-12
 

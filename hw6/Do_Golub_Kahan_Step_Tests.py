@@ -4,7 +4,7 @@
 
 # Coding Challenge 6 Tests
 
-from Do_SVD import *
+from Do_Golub_Kahan_Step import *
 
 def perform_bidiagonalization_3x3_matrix():
     

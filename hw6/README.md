@@ -3,8 +3,8 @@
 
 This code submission by Jan Lendl Uy comprises two files:
 
-- Do_SVD.py
-- Do_SVD_Tests.py
+- Do_Golub_Kahan_Step.py
+- Do_Golub_Kahan_Step_Tests.py
 
 In `Do_SVD.py`, it contains the implementations for performing bidiagonalization via the Golub-Kahan algorithm and tridiagonalization given a bidiagonal matrix. You may check this file to inspect the implementation of the two routines.
 
