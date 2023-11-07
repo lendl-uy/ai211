@@ -10,5 +10,5 @@ In `Do_SVD.py`, it contains the implementations for performing bidiagonalization
 
 On the other hand, `Do_SVD_Tests.py` contains the tests performed in verifying the correctness of the bidiagonal and tridiagonal matrices computed by the codes written by the author. RUN this file to check the results for different tests which include:
 
-- A is a 3x3 matrix
-- Randomized testing for a square matrix with random size and entries
+- Bidiagonalize and tridiagonalize a 3x3 matrix
+- Randomized testing of bidiagonalization and tridiagonalization for a matrix with random size and entries
