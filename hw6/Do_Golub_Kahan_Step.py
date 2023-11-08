@@ -13,7 +13,7 @@ import math
 
 EPSILON = 1e-12
 
-np.set_printoptions(precision=1, suppress=True)
+#np.set_printoptions(precision=5)
 
 def zero_out_small_numbers(A, tol=EPSILON):
     
@@ -146,18 +146,10 @@ def compare_singular_values(A, B, remove_duplicates=False):
         S_B = np.flip(np.unique(S_B))
             
     if S_A.size != S_B.size:
-        #print(f"A = {A}")
-        #print(f"B = {B}")
-        #print(f"S_A = {S_A}")
-        #print(f"S_B = {S_B}")
         raise RuntimeError(f"Number of singular values do not match!")        
     
     if not np.allclose(S_A-S_B, np.zeros(S_A.size, dtype="float"), 
                     rtol=1e-3, atol=1e-5):
-        #print(f"A = {A}")
-        #print(f"B = {B}")
-        #print(f"S_A = {S_A}")
-        #print(f"S_B = {S_B}")
         raise RuntimeError(f"Singular values of computed matrix are not equal to the singular values of A")
 
 def verify_bidiagonal_matrix(A, B, suppress_success_flag=False):
