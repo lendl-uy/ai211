@@ -320,17 +320,3 @@ def verify_svd(A, U, Σ, Vt, suppress_success_flag=False):
     
     if not suppress_success_flag:
         print(f"Computed factors from SVD are correct!")
-
-def main():
-    
-    A = np.array([[1, 1, 0, 0],
-                  [0, 2, 1, 0],
-                  [0, 0, 3, 1],
-                  [0, 0, 0, 4]]).astype("float")
-    
-    print(f"A = {A}")
-    U, Σ, Vt = do_svd_via_golub_reinsch(A)
-    print(f"U @ Σ @ Vt = {U @ Σ @ Vt}") # Multiplying the factors of A must equal A
-
-if __name__ == "__main__":
-    main()
