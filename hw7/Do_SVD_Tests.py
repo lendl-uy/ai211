@@ -5,58 +5,45 @@
 # Coding Challenge 7 Tests
 
 from Do_SVD import *
-
-def perform_bidiagonalization_3x3_matrix():
-    
-    print(f"\n---- Performing Golub-Kahan bidiagonalization on a 3x3 matrix ----\n")
-
-    A = np.array([[6, 5, 0],
-                  [5, 1, 4],
-                  [0, 4, 3]]).astype("float")
-
-    print(f"A = {A}\n")
         
-def perform_tridiagonalization_3x3_matrix():
+def perform_svd_on_4x4_bidiagonal_matrix():
     
-    print(f"\n---- Performing tridiagonalization on a 3x3 matrix ----\n")
+    print(f"\n---- Performing SVD on a 4x4 bidiagonal matrix ----\n")
     
-    A = np.array([[6, 5, 0],
-                  [5, 1, 4],
-                  [0, 4, 3]]).astype("float")
+    A = np.array([[1, 1, 0, 0],
+                  [0, 2, 1, 0],
+                  [0, 0, 3, 1],
+                  [0, 0, 0, 4]]).astype("float")
 
-    print(f"A = {A}\n")
+    print(f"A = {A}")
     
-def perform_bidiagonalization_on_matrix_with_random_sizes_and_entries(NUM_TESTS):
+    U, Σ, Vt = do_svd_via_golub_reinsch(A)
     
-    print(f"\n---- Performing {NUM_TESTS} bidiagonalization tests on matrices with random sizes and entries ----\n")
+    print("\nResults:")
+    print(f"U = {U}\n")
+    print(f"Σ = {Σ}\n")
+    print(f"Vt = {Vt}\n")
+    
+    verify_svd(A, U, Σ, Vt)
+    
+def perform_svd_on_matrix_with_random_sizes_and_entries(NUM_TESTS):
+    
+    print(f"\n---- Performing SVD on {NUM_TESTS} matrices with random sizes and entries such that rows ≥ cols ----\n")
     
     for i in range(NUM_TESTS):
         # Initialize matrix A to be decomposed
         m = np.random.randint(3, 50) # Random number of rows
-        n = np.random.randint(3, 50) # Random number of cols
+        n = np.random.randint(m, 50) # Random number of cols
         A = np.random.randint(-10, 10, size=(m, n)).astype("float")
         
         #print(f"A = {A}")        
         
     print(f"All computed bidiagonal matrices are correct for {NUM_TESTS} test matrices!")
-    
-def perform_tridiagonalization_on_matrix_with_random_sizes_and_entries(NUM_TESTS):
-    
-    print(f"\n---- Performing {NUM_TESTS} tridiagonalization tests on matrices with random sizes and entries ----\n")
-    
-    for i in range(NUM_TESTS):
-        # Initialize matrix A to be decomposed
-        m = np.random.randint(3, 50) # Random number of rows
-        n = np.random.randint(3, 50) # Random number of cols
-        A = np.random.randint(-10, 10, size=(m, n)).astype("float")
-        
-        #print(f"A = {A}")
-                
-    print(f"All computed tridiagonal matrices are correct for {NUM_TESTS} test matrices!")
 
 def main():
     
-    pass
+    perform_svd_on_4x4_bidiagonal_matrix()
+    #perform_svd_on_matrix_with_random_sizes_and_entries(5)
 
 if __name__ == "__main__":
     main()
