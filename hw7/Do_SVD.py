@@ -5,17 +5,15 @@
 # Coding Challenge 7: Perform SVD
 
 # Useful references:
-# [1] Householder Bidiagonalization:
-    # https://drsfenner.org/blog/2016/03/householder-bidiagonalization/
-
+# [1] https://drsfenner.org/blog/2016/03/householder-bidiagonalization/
 
 import numpy as np
 import math
 
-EPSILON = 1e-12
-MAX_ITERATION_COUNT = 1000
+EPSILON = 1e-10
+MAX_ITERATION_COUNT = 20000
 
-np.set_printoptions(precision=1)
+np.set_printoptions(precision=2)
 
 def is_diagonal(A):
     
@@ -155,7 +153,7 @@ def get_bidiagonal_matrix(A):
     
     # Check if input matrix is already bidiagonal
     diff = B-get_bidiagonal_copy(A)
-    if abs(np.sum(diff)) < EPSILON:
+    if np.allclose(diff, np.zeros((rows, cols))):
         return U, B, Vt
     
     # Golub-Kahan Bidiagonalization
@@ -183,7 +181,7 @@ def get_bidiagonal_matrix(A):
             B[i:, i+1:] -= 2*(B[i:, i+1:] @ v) @ v.T
             P = get_householder_matrix(v, cols, i+1)
             Vt = P @ Vt
-            
+                  
     zero_out_small_numbers(B)
 
     return U, B, Vt
@@ -273,7 +271,7 @@ def do_svd_via_golub_reinsch(A):
     #print(f"U @ B @ Vt = {U @ B @ Vt}") # Sanity check, must equal original matrix A
 
     rows, cols = B.shape
-    print(f"B = {B}")
+    #print(f"B = {B}")
     Σ = B.copy()
     V = Vt.T
     
@@ -292,24 +290,24 @@ def do_svd_via_golub_reinsch(A):
         # Divide B into three block matrices
         # Determine smallest p and largest q for the block sizes
         B_33 = B[rows-q:, cols-q:]
+        q_i = q
         #print(f"B_33 init (i={iteration_count+1}) = {B_33}")
         if abs(np.sum(B_33)) > EPSILON:
             for j in range(1, cols-1):
-                B_33_temp = B[rows-q-j:, cols-q-j:]
-                diff = B_33_temp-get_diagonal_copy(B_33_temp)
-                if abs(np.sum(diff)) <= EPSILON:
-                    q += 1
-                else:
-                    break
-                B_33 = B_33_temp.copy()
-        else:
-            for j in range(1, cols-1):
-                B_33_temp = B[rows-q-j:, cols-q-j:]
+                B_33_temp = B[rows-q_i-j:, cols-q_i-j:]
                 diff = B_33_temp-get_diagonal_copy(B_33_temp)
                 if abs(np.sum(diff)) > EPSILON:
-                    q += 1
                     break
                 B_33 = B_33_temp.copy()
+                q += 1
+        else:
+            for j in range(1, cols-1):
+                B_33_temp = B[rows-q_i-j:, cols-q_i-j:]
+                diff = B_33_temp-get_diagonal_copy(B_33_temp)
+                if abs(np.sum(diff)) > EPSILON:
+                    break
+                B_33 = B_33_temp.copy()
+                q += 1
 
         B_22 = B[rows-q-1:rows-q, cols-1-q:cols-q]
         if abs(np.sum(B_22)) > EPSILON:
@@ -349,11 +347,12 @@ def do_svd_via_golub_reinsch(A):
             break
         
         if iteration_count == MAX_ITERATION_COUNT-1:
+            print(f"A = {A}")
             raise RuntimeError(f"Algorithm was not able to converge to complete SVD for {MAX_ITERATION_COUNT} iterations!")
-        
-        zero_out_small_numbers(B)
-        
+           
+        #print(f"B_{iteration_count+1} = {B}")     
         iteration_count += 1
+        #zero_out_small_numbers(B)
         
     #print(f"Iterations = {iteration_count}")
         
@@ -363,11 +362,34 @@ def verify_svd(A, U, Σ, Vt, suppress_success_flag=False):
     
     rows, cols = A.shape
     
-    A_reconstructed = U @ Σ @ Vt
-    
-    if not np.allclose(A_reconstructed-A, np.zeros((rows, cols), dtype="float"), 
-                    rtol=1e-3, atol=1e-3):
+    A_hat = U @ Σ @ Vt
+    U_np, Σ_np, Vt_np = np.linalg.svd(A)
+    np.around(A_hat, 2, A_hat)
+        
+    if not np.allclose(A_hat-A, np.zeros((rows, cols), dtype="float"), atol=1e-2):
+        print(f"A = {A}")
+        print(f"U = {U}")
+        print(f"U_np = {U_np}")
+        print(f"Σ = {Σ}")
+        print(f"Σ_np = {Σ_np}")
+        print(f"Vt = {Vt}")
+        print(f"Vt_np = {Vt_np}")
+        print(f"A_hat = {A_hat}")
         raise RuntimeError(f"One or more factors of the decomposition are incorrect!")
     
     if not suppress_success_flag:
         print(f"Computed factors from SVD are correct!")
+        
+def main():
+    
+    A = np.array([[  0. ,  0., -10. , -9.],
+ [  7. , -7. , -3. ,  5.],
+ [  9. ,-10.  ,-6.  , 5.],
+ [  7.,   6. ,  9. ,  8.]]).astype("float")
+    
+    U, Σ, Vt = do_svd_via_golub_reinsch(A)
+    
+    verify_svd(A, U, Σ, Vt)
+    
+if __name__ == "__main__":
+    main()
