@@ -13,9 +13,20 @@ import numpy as np
 import math
 
 EPSILON = 1e-12
-MAX_ITERATION_COUNT = 50
+MAX_ITERATION_COUNT = 1000
 
 np.set_printoptions(precision=1)
+
+def is_diagonal(A):
+    
+    rows, cols = A.shape
+    
+    B = get_diagonal_copy(A)
+    
+    if not np.allclose(B-A, np.zeros((rows, cols), dtype="float"), 
+                    rtol=1e-3, atol=1e-3):
+        return False
+    return True 
 
 def get_diagonal_copy(A):
     
@@ -177,25 +188,61 @@ def get_bidiagonal_matrix(A):
 
     return U, B, Vt
 
+def get_tridiagonal_matrix(B):
+        
+    rows, cols = B.shape
+    
+    # Generate a larger matrix H such that H = {[0 B.T], [B 0]}
+    # Permuting H properly will result in a tridiagonal matrix
+    H = np.zeros((rows+cols, rows+cols))
+    
+    H[:cols, cols:] = B.T # Set upper right submatrix to B.T
+    H[cols:, :cols] = B # Set bottom left submatrix to B
+    
+    # H has zero rows and/or columns when rows > cols
+    # Initialize iteration var m to 2*cols < rows+cols to avoid permuting
+    # these zero rows and/or columns
+    if rows > cols:
+        m = 2*cols
+        H = H[:m, :m]
+    else:
+        m = rows+cols
+        
+    # Initialize permutation matrix P that shifts columns to achieve tridiagonal form
+    # whose permutations are determined by the following piecewise equation:
+    # pi = i/2, i mod 2 == 0
+    # pi = floor(i/2) + ceil((rows+cols)/2), i mod 2 == 1
+    P = np.zeros((m, m))
+    
+    for i in range(0, m):
+        if i%2 == 0:
+            pi = i//2 # Permutation index for even columns, // used for int division
+            P[pi, i] = 1.0
+        else:
+            pi = i//2 + math.ceil((m)/2) # Permutation index for odd columns
+            P[pi, i] = 1.0
+        
+    T = P.T @ H @ P
+    
+    return T
+
 def golub_kahan_step(U, B, V, n, p, q):
         
-    #T = get_tridiagonal_matrix(B)
-    #print(f"T = {T}")
+    T = get_tridiagonal_matrix(B)
     B_22 = B[p:n-q, p:n-q]
-    T = B_22.T @ B_22
+    #T = B_22.T @ B_22
     
     rows, cols = T.shape
     
     C = T[rows-2:, cols-2:]
     #print(f"B_22 = {B_22}")
-    #print(f"T = {T}")
     #print(f"block = {C}")
-    
     λ_1, λ_2 = get_eigenvalues_2x2(C)
     if abs(λ_1-C[1,1]) <= abs(λ_2-C[1,1]):
         µ = λ_1
     else:
         µ = λ_2
+    #µ = get_wilkinson_shift(T)
         
     alpha = B[p, p]**2 - µ
     beta = B[p, p]*B[p, p+1]
@@ -226,7 +273,7 @@ def do_svd_via_golub_reinsch(A):
     #print(f"U @ B @ Vt = {U @ B @ Vt}") # Sanity check, must equal original matrix A
 
     rows, cols = B.shape
-    #print(f"B = {B}")
+    print(f"B = {B}")
     Σ = B.copy()
     V = Vt.T
     
@@ -245,20 +292,22 @@ def do_svd_via_golub_reinsch(A):
         # Divide B into three block matrices
         # Determine smallest p and largest q for the block sizes
         B_33 = B[rows-q:, cols-q:]
+        #print(f"B_33 init (i={iteration_count+1}) = {B_33}")
         if abs(np.sum(B_33)) > EPSILON:
             for j in range(1, cols-1):
                 B_33_temp = B[rows-q-j:, cols-q-j:]
                 diff = B_33_temp-get_diagonal_copy(B_33_temp)
                 if abs(np.sum(diff)) <= EPSILON:
-                    B_33 = B_33_temp.copy()
                     q += 1
                 else:
                     break
+                B_33 = B_33_temp.copy()
         else:
             for j in range(1, cols-1):
-                B_33_temp = B[rows-1-j:, cols-1-j:]
+                B_33_temp = B[rows-q-j:, cols-q-j:]
                 diff = B_33_temp-get_diagonal_copy(B_33_temp)
-                if abs(np.sum(B_33)) > EPSILON:
+                if abs(np.sum(diff)) > EPSILON:
+                    q += 1
                     break
                 B_33 = B_33_temp.copy()
 
@@ -274,11 +323,11 @@ def do_svd_via_golub_reinsch(A):
                 B_22 = B_22_temp.copy()
         else:
             for j in range(1, cols-q):
-                B_22_temp = B[rows-1-q-j:rows-q, cols-1-q-j:cols-q].copy()
+                B_22_temp = B[rows-1-q-j:rows-q, cols-1-q-j:cols-q]
                 diff = B_22_temp-get_bidiagonal_copy(B_22_temp)
                 if abs(np.sum(diff)) > EPSILON:
                     break
-                B_22 = B_22_temp
+                B_22 = B_22_temp.copy()
 
         #B_11 = B[:p, :p]
         
@@ -305,6 +354,8 @@ def do_svd_via_golub_reinsch(A):
         zero_out_small_numbers(B)
         
         iteration_count += 1
+        
+    #print(f"Iterations = {iteration_count}")
         
     return U, Σ, V.T
     
