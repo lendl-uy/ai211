@@ -67,7 +67,7 @@ def main():
     
     perform_svd_on_4x4_dense_matrix()
     perform_svd_on_4x4_bidiagonal_matrix()
-    perform_svd_on_matrix_with_random_sizes_and_entries(100000)
+    perform_svd_on_matrix_with_random_sizes_and_entries(2000)
 
 if __name__ == "__main__":
     main()

@@ -10,5 +10,6 @@ In `Do_SVD.py`, it contains the implementations for performing singular value de
 
 On the other hand, `Do_SVD_Tests.py` contains the tests performed in verifying the correctness of the decomposed matrix. RUN this file to check the results for different tests which include:
 
+- 4x4 dense matrix (all elements are nonzero)
 - 4x4 bidiagonal matrix
 - Randomized testing of bidiagonalization and tridiagonalization for a matrix with random size and entries

@@ -128,19 +128,6 @@ def givens_rotation(A, i, j):
     G[j, i] = b/r
 
     return G
-
-def get_eigenvalues_2x2(B):
-        
-    a = B[0, 0]
-    b = B[0, 1]
-    c = B[1, 0]
-    d = B[1, 1]
-    
-    # Eigenvalue formula for 2x2 matrix
-    λ_1 = ((a+d) + math.sqrt((a+d)**2 - 4*(a*d-b*c)))/2
-    λ_2 = ((a+d) - math.sqrt((a+d)**2 - 4*(a*d-b*c)))/2
-
-    return λ_1, λ_2
        
 def get_bidiagonal_matrix(A):
     
@@ -233,19 +220,10 @@ def golub_kahan_step(U, B, V, n, p, q):
     rows, cols = T.shape
     
     C = T[rows-2:, cols-2:]
-    #print(f"B_22 = {B_22}")
-    #print(f"block = {C}")
-    λ_1, λ_2 = get_eigenvalues_2x2(C)
-    if abs(λ_1-C[1,1]) <= abs(λ_2-C[1,1]):
-        µ = λ_1
-    else:
-        µ = λ_2
-    #µ = get_wilkinson_shift(T)
-        
+    µ = get_wilkinson_shift(T)
+            
     alpha = B[p, p]**2 - µ
     beta = B[p, p]*B[p, p+1]
-    #B[p, p] = alpha
-    #B[p, p+1] = beta
 
     for i in range(p, n-q):
         G = givens_rotation(B.T, i+1, i)
@@ -268,10 +246,8 @@ def golub_kahan_step(U, B, V, n, p, q):
 def do_svd_via_golub_reinsch(A):
     
     U, B, Vt = get_bidiagonal_matrix(A)
-    #print(f"U @ B @ Vt = {U @ B @ Vt}") # Sanity check, must equal original matrix A
 
     rows, cols = B.shape
-    #print(f"B = {B}")
     Σ = B.copy()
     V = Vt.T
     
@@ -326,12 +302,6 @@ def do_svd_via_golub_reinsch(A):
                 if abs(np.sum(diff)) > EPSILON:
                     break
                 B_22 = B_22_temp.copy()
-
-        #B_11 = B[:p, :p]
-        
-        #print(f"B_22_{iteration_count+1} = {B_22}")
-        #print(f"B_33_{iteration_count+1} = {B_33}")
-        #print(f"q_{iteration_count+1} = {q}")
           
         if q < cols:
             # Zero out superdiagonal entry if diagonal entry is ~zero
@@ -340,22 +310,16 @@ def do_svd_via_golub_reinsch(A):
                 if abs(B[j, j]) < EPSILON:
                     G = givens_rotation(B.T, j+1, j)
                     B = B @ G.T
-                    #print(f"B = {B}")
             U, B, V = golub_kahan_step(U, B, V, B.shape[1], p, q) 
         else:
             Σ = get_diagonal_copy(B)
             break
         
         if iteration_count == MAX_ITERATION_COUNT-1:
-            print(f"A = {A}")
             raise RuntimeError(f"Algorithm was not able to converge to complete SVD for {MAX_ITERATION_COUNT} iterations!")
            
-        #print(f"B_{iteration_count+1} = {B}")     
         iteration_count += 1
-        #zero_out_small_numbers(B)
-        
-    #print(f"Iterations = {iteration_count}")
-        
+                
     return U, Σ, V.T
     
 def verify_svd(A, U, Σ, Vt, suppress_success_flag=False):
@@ -367,29 +331,7 @@ def verify_svd(A, U, Σ, Vt, suppress_success_flag=False):
     np.around(A_hat, 2, A_hat)
         
     if not np.allclose(A_hat-A, np.zeros((rows, cols), dtype="float"), atol=1e-2):
-        print(f"A = {A}")
-        print(f"U = {U}")
-        print(f"U_np = {U_np}")
-        print(f"Σ = {Σ}")
-        print(f"Σ_np = {Σ_np}")
-        print(f"Vt = {Vt}")
-        print(f"Vt_np = {Vt_np}")
-        print(f"A_hat = {A_hat}")
         raise RuntimeError(f"One or more factors of the decomposition are incorrect!")
     
     if not suppress_success_flag:
         print(f"Computed factors from SVD are correct!")
-        
-def main():
-    
-    A = np.array([[  0. ,  0., -10. , -9.],
- [  7. , -7. , -3. ,  5.],
- [  9. ,-10.  ,-6.  , 5.],
- [  7.,   6. ,  9. ,  8.]]).astype("float")
-    
-    U, Σ, Vt = do_svd_via_golub_reinsch(A)
-    
-    verify_svd(A, U, Σ, Vt)
-    
-if __name__ == "__main__":
-    main()
