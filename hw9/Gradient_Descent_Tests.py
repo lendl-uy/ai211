@@ -2,11 +2,11 @@
 # Student Number: 2019-00312
 # Class: AI 211 FZZQ
 
-# Coding Challenge 8 Tests
+# Coding Challenge 9 Tests
 
-from Do_Gradient_Descent import *
+from Gradient_Descent import *
     
-def perform_svd_on_matrix_with_random_sizes_and_entries(NUM_TESTS):
+def get_computational_graph_4x4_matrix(NUM_TESTS):
     
     print(f"\n---- Performing SVD on {NUM_TESTS} matrices with random sizes and entries such that rows ≥ cols ----\n")
     
@@ -21,7 +21,7 @@ def perform_svd_on_matrix_with_random_sizes_and_entries(NUM_TESTS):
 def main():
     
     pass
-    #perform_svd_on_matrix_with_random_sizes_and_entries(2000)
+    #get_computational_graph_4x4_matrix(2000)
 
 if __name__ == "__main__":
     main()

@@ -1,5 +1,5 @@
 # Performing Stochastic Gradient Descent
-## AI 211 Coding Challenge 8
+## AI 211 Coding Challenge 9
 
 This code submission by Jan Lendl Uy comprises two files:
 
