@@ -4,24 +4,202 @@
 
 # Coding Challenge 8 Tests
 
-from Compute_Gradients import *
-    
-def perform_svd_on_matrix_with_random_sizes_and_entries(NUM_TESTS):
-    
-    print(f"\n---- Performing SVD on {NUM_TESTS} matrices with random sizes and entries such that rows ≥ cols ----\n")
-    
-    for i in range(NUM_TESTS):
-        # Initialize matrix A to be decomposed
-        m = np.random.randint(3, 5) # Random number of rows
-        #n = np.random.randint(3, m) # Random number of cols
-        A = np.random.randint(-10, 10, size=(m, m)).astype("float")
-        
-    print(f"All computed SVD factors are correct for {NUM_TESTS} test matrices!")
+import numpy as np
+from NeuralNetwork import NeuralNetwork, mean_squared_error
+from Compute_Gradients import compute_gradients
 
+EPOCHS = 10000
+
+def compute_gradients_of_2_layer_nn_for_xor_operation():
+    
+    print(f"\n---- Training an NN for XOR Operation with 2 Hidden Layers ----\n")
+    
+    # XOR truth table inputs
+    x = np.array([[0, 0],
+                  [0, 1],
+                  [1, 0],
+                  [1, 1]]).astype("float")
+    
+    # XOR truth table outputs
+    y_true = np.array([[0],
+                    [1],
+                    [1],
+                    [0]])
+    
+    # Initialize depth of the input layer, hidden layer/s, and output layer
+    input_size = 2
+    hidden_sizes = [5, 5]
+    output_size = 1
+
+    nn = NeuralNetwork(input_size, hidden_sizes, output_size, 1)
+
+    for n in range(EPOCHS):
+        # Forward-pass
+        y_predicted = nn.forward_pass(x)
+
+        # Compute gradients for backpropagation
+        weight_gradients, bias_gradients = compute_gradients(nn.get_layers(), 
+                                                            nn.get_weights(), 
+                                                            y_predicted, 
+                                                            y_true)
+
+        nn.backpropagation(weight_gradients, bias_gradients, y_true)
+        
+        if n%500 == 0:
+            loss = mean_squared_error(y_predicted, y_true)
+            #print(f"Epoch {n}, Loss: {loss}")
+      
+    if nn.verify_predictions(y_true):
+        print("Computed gradients are correct! Gradient descent converges to a sufficient minimum!")
+    
+def compute_gradients_of_2_layer_nn_for_xnor_operation():
+    
+    print(f"\n---- Training an NN for XNOR Operation with 2 Hidden Layers ----\n")
+    
+    # XNOR truth table inputs
+    x = np.array([[0, 0],
+                  [0, 1],
+                  [1, 0],
+                  [1, 1]]).astype("float")
+    
+    # XNOR truth table outputs
+    y_true = np.array([[1],
+                    [0],
+                    [0],
+                    [1]])
+    
+    # Initialize depth of the input layer, hidden layer/s, and output layer
+    input_size = 2
+    hidden_sizes = [5, 5]
+    output_size = 1
+
+    nn = NeuralNetwork(input_size, hidden_sizes, output_size, 6)
+
+    for n in range(EPOCHS):
+        # Forward-pass
+        y_predicted = nn.forward_pass(x)
+
+        # Compute gradients for backpropagation
+        weight_gradients, bias_gradients = compute_gradients(nn.get_layers(), 
+                                                            nn.get_weights(), 
+                                                            y_predicted, 
+                                                            y_true)
+
+        nn.backpropagation(weight_gradients, bias_gradients, y_true)
+        
+        if n%500 == 0:
+            loss = mean_squared_error(y_predicted, y_true)
+            #print(f"Epoch {n}, Loss: {loss}")
+      
+    if nn.verify_predictions(y_true):
+        print("Computed gradients are correct! Gradient descent converges to a sufficient minimum!")
+
+def compute_gradients_of_n_layer_nn_for_xor_operation():
+    
+    print(f"\n---- Training an NN for XOR Operation with Random Number of Hidden Layers ----\n")
+    
+    # XOR truth table inputs
+    x = np.array([[0, 0],
+                  [0, 1],
+                  [1, 0],
+                  [1, 1]]).astype("float")
+    
+    # XOR truth table outputs
+    y_true = np.array([[0],
+                    [1],
+                    [1],
+                    [0]])
+    
+    # Initialize depth of the input layer, hidden layer/s, and output layer
+    input_size = 2
+    hidden_layer_depth = np.random.randint(2, 5)
+    hidden_sizes = np.random.randint(2, 10)*np.ones(hidden_layer_depth).astype("int")
+    hidden_sizes = hidden_sizes.tolist()
+    #print(f"hidden_sizes = {hidden_sizes}")
+    output_size = 1
+    seed = 0
+
+    while True:
+        nn = NeuralNetwork(input_size, hidden_sizes, output_size, seed)
+
+        for n in range(EPOCHS):
+            # Forward-pass
+            y_predicted = nn.forward_pass(x)
+
+            # Compute gradients for backpropagation
+            weight_gradients, bias_gradients = compute_gradients(nn.get_layers(), 
+                                                                nn.get_weights(), 
+                                                                y_predicted, 
+                                                                y_true)
+
+            nn.backpropagation(weight_gradients, bias_gradients, y_true)
+            
+            if n%500 == 0:
+                loss = mean_squared_error(y_predicted, y_true)
+                #print(f"Epoch {n}, Loss: {loss}")
+        
+        if (nn.verify_predictions(y_true)):
+            print("Computed gradients are correct! Gradient descent converges to a sufficient minimum!")
+            break
+        print("Trying a different seed for initialization of weights.")
+        seed += 1
+        
+def compute_gradients_of_n_layer_nn_for_xnor_operation():
+    
+    print(f"\n---- Training an NN for XNOR Operation with Random Number of Hidden Layers ----\n")
+    
+    # XOR truth table inputs
+    x = np.array([[0, 0],
+                  [0, 1],
+                  [1, 0],
+                  [1, 1]]).astype("float")
+    
+    # XOR truth table outputs
+    y_true = np.array([[1],
+                    [0],
+                    [0],
+                    [1]])
+    
+    # Initialize depth of the input layer, hidden layer/s, and output layer
+    input_size = 2
+    hidden_layer_depth = np.random.randint(2, 5)
+    hidden_sizes = np.random.randint(2, 10)*np.ones(hidden_layer_depth).astype("int")
+    hidden_sizes = hidden_sizes.tolist()
+    #print(f"hidden_sizes = {hidden_sizes}")
+    output_size = 1
+    seed = 0
+
+    while True:
+        nn = NeuralNetwork(input_size, hidden_sizes, output_size, seed)
+
+        for n in range(EPOCHS):
+            # Forward-pass
+            y_predicted = nn.forward_pass(x)
+
+            # Compute gradients for backpropagation
+            weight_gradients, bias_gradients = compute_gradients(nn.get_layers(), 
+                                                                nn.get_weights(), 
+                                                                y_predicted, 
+                                                                y_true)
+
+            nn.backpropagation(weight_gradients, bias_gradients, y_true)
+            
+            if n%500 == 0:
+                loss = mean_squared_error(y_predicted, y_true)
+                #print(f"Epoch {n}, Loss: {loss}")
+        
+        if (nn.verify_predictions(y_true)):
+            print("Computed gradients are correct! Gradient descent converges to a sufficient minimum!")
+            break
+        print("Trying a different seed for initialization of weights.")
+        seed += 1
+    
 def main():
     
-    pass
-    #perform_svd_on_matrix_with_random_sizes_and_entries(2000)
+    compute_gradients_of_2_layer_nn_for_xor_operation()
+    compute_gradients_of_2_layer_nn_for_xnor_operation()
+    compute_gradients_of_n_layer_nn_for_xor_operation()
+    compute_gradients_of_n_layer_nn_for_xnor_operation()
 
 if __name__ == "__main__":
     main()
