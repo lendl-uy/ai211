@@ -6,7 +6,6 @@
 
 import numpy as np
 from NeuralNetwork import NeuralNetwork, mean_squared_error
-from Compute_Gradients import compute_gradients
 
 EPOCHS = 10000
 
@@ -33,24 +32,21 @@ def compute_gradients_of_2_layer_nn_for_xor_operation():
 
     nn = NeuralNetwork(input_size, hidden_sizes, output_size, 1)
 
+    # Train the neural network
     for n in range(EPOCHS):
         # Forward-pass
         y_predicted = nn.forward_pass(x)
-
-        # Compute gradients for backpropagation
-        weight_gradients, bias_gradients = compute_gradients(nn.get_layers(), 
-                                                            nn.get_weights(), 
-                                                            y_predicted, 
-                                                            y_true)
-
-        nn.backpropagation(weight_gradients, bias_gradients, y_true)
+        
+        # Backpropagation
+        nn.backpropagation(y_true)
         
         if n%500 == 0:
             loss = mean_squared_error(y_predicted, y_true)
             #print(f"Epoch {n}, Loss: {loss}")
-      
+            
     if nn.verify_predictions(y_true):
-        print("Computed gradients are correct! Gradient descent converges to a sufficient minimum!")
+        print("Computed gradients are correct! Gradient descent converges to a sufficient minimum!\n")
+        print(f"y_predicted = {y_predicted}")
     
 def compute_gradients_of_2_layer_nn_for_xnor_operation():
     
@@ -75,24 +71,21 @@ def compute_gradients_of_2_layer_nn_for_xnor_operation():
 
     nn = NeuralNetwork(input_size, hidden_sizes, output_size, 6)
 
+    # Train the neural network
     for n in range(EPOCHS):
         # Forward-pass
         y_predicted = nn.forward_pass(x)
-
-        # Compute gradients for backpropagation
-        weight_gradients, bias_gradients = compute_gradients(nn.get_layers(), 
-                                                            nn.get_weights(), 
-                                                            y_predicted, 
-                                                            y_true)
-
-        nn.backpropagation(weight_gradients, bias_gradients, y_true)
+        
+        # Backpropagation
+        nn.backpropagation(y_true)
         
         if n%500 == 0:
             loss = mean_squared_error(y_predicted, y_true)
             #print(f"Epoch {n}, Loss: {loss}")
       
     if nn.verify_predictions(y_true):
-        print("Computed gradients are correct! Gradient descent converges to a sufficient minimum!")
+        print("Computed gradients are correct! Gradient descent converges to a sufficient minimum!\n")
+        print(f"y_predicted = {y_predicted}")
 
 def compute_gradients_of_n_layer_nn_for_xor_operation():
     
@@ -122,24 +115,21 @@ def compute_gradients_of_n_layer_nn_for_xor_operation():
     while True:
         nn = NeuralNetwork(input_size, hidden_sizes, output_size, seed)
 
+        # Train the neural network
         for n in range(EPOCHS):
             # Forward-pass
             y_predicted = nn.forward_pass(x)
-
-            # Compute gradients for backpropagation
-            weight_gradients, bias_gradients = compute_gradients(nn.get_layers(), 
-                                                                nn.get_weights(), 
-                                                                y_predicted, 
-                                                                y_true)
-
-            nn.backpropagation(weight_gradients, bias_gradients, y_true)
+            
+            # Backpropagation
+            nn.backpropagation(y_true)
             
             if n%500 == 0:
                 loss = mean_squared_error(y_predicted, y_true)
                 #print(f"Epoch {n}, Loss: {loss}")
         
         if (nn.verify_predictions(y_true)):
-            print("Computed gradients are correct! Gradient descent converges to a sufficient minimum!")
+            print("Computed gradients are correct! Gradient descent converges to a sufficient minimum!\n")
+            print(f"y_predicted = {y_predicted}")
             break
         print("Trying a different seed for initialization of weights.")
         seed += 1
@@ -172,28 +162,25 @@ def compute_gradients_of_n_layer_nn_for_xnor_operation():
     while True:
         nn = NeuralNetwork(input_size, hidden_sizes, output_size, seed)
 
+        # Train the neural network
         for n in range(EPOCHS):
             # Forward-pass
             y_predicted = nn.forward_pass(x)
-
-            # Compute gradients for backpropagation
-            weight_gradients, bias_gradients = compute_gradients(nn.get_layers(), 
-                                                                nn.get_weights(), 
-                                                                y_predicted, 
-                                                                y_true)
-
-            nn.backpropagation(weight_gradients, bias_gradients, y_true)
+            
+            # Backpropagation
+            nn.backpropagation(y_true)
             
             if n%500 == 0:
                 loss = mean_squared_error(y_predicted, y_true)
                 #print(f"Epoch {n}, Loss: {loss}")
         
-        if (nn.verify_predictions(y_true)):
-            print("Computed gradients are correct! Gradient descent converges to a sufficient minimum!")
+        if nn.verify_predictions(y_true):
+            print("Computed gradients are correct! Gradient descent converges to a sufficient minimum!\n")
+            print(f"y_predicted = {y_predicted}")
             break
-        print("Trying a different seed for initialization of weights.")
+        print("Trying a different seed for the initialization of weights.")
         seed += 1
-    
+
 def main():
     
     compute_gradients_of_2_layer_nn_for_xor_operation()

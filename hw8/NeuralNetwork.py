@@ -1,4 +1,5 @@
 import numpy as np
+from ComputationalGraph import ComputationalGraph
 
 class NeuralNetwork:
     
@@ -17,26 +18,18 @@ class NeuralNetwork:
             b = np.zeros((1, layer_sizes[i+1]))
             self.weights.append(w)
             self.biases.append(b)
-
+            
+        self.computational_graph = ComputationalGraph(self.weights, self.biases)
+    
     def forward_pass(self, input_layer):
-        x = input_layer
-        self.layers.append(x)
-
-        # Forward pass through the hidden layers
-        for i in range(len(self.weights)-1):
-            z = x @ self.weights[i] + self.biases[i]
-            a = relu(z)
-            self.layers.append(a)
-            x = a
-
-        # Forward pass through the output layer
-        # Resulting output layer is the prediction
-        output_layer = x @ self.weights[-1] + self.biases[-1]
-        self.layers.append(output_layer)
-        #print(f"layers = {self.layers}")
+        
+        self.layers = self.computational_graph.forward(input_layer).copy()
+        output_layer = self.layers[-1]
         return output_layer
     
-    def backpropagation(self, weight_gradients, bias_gradients, y_true, λ=0.03):
+    def backpropagation(self, y_true, λ=0.03):
+        
+        weight_gradients, bias_gradients = self.computational_graph.compute_gradients(y_true)
 
         # Update weights and biases using computed gradients
         for i in range(len(self.weights)):
@@ -68,12 +61,6 @@ class NeuralNetwork:
     
     def get_biases(self):
         return self.biases.copy() # Return a defensive copy
-    
-def relu(x):
-    return np.maximum(0, x)
-    
-def relu_derivative(x):
-    return np.where(x > 0, 1, 0)
 
 def mean_squared_error(predictions, targets):
     return np.mean(np.square(predictions - targets))
