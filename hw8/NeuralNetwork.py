@@ -23,7 +23,7 @@ class NeuralNetwork:
     
     def forward_pass(self, input_layer):
         
-        self.layers = self.computational_graph.forward(input_layer).copy()
+        self.layers = self.computational_graph.forward(input_layer)
         output_layer = self.layers[-1]
         return output_layer
     

@@ -36,7 +36,7 @@ class ComputationalGraph:
         # Resulting output layer is the prediction
         output_layer = x @ self.weights[-1] + self.biases[-1]
         self.nodes.append(output_layer)
-        return self.nodes
+        return self.nodes.copy()
 
     # Computes the gradients of an n-layer neural network
     # Iterative approach to computing the gradients
