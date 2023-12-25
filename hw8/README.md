@@ -1,4 +1,4 @@
-# Performing Stochastic Gradient Descent
+# Computing Gradients with Computational Graphs
 ## AI 211 Coding Challenge 8
 
 This code submission by Jan Lendl Uy comprises two files:
