@@ -61,26 +61,9 @@ class DataPrep:
         return train_enc, train_dec, train_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size
 
 
-
-def test_Vocab():
-    data = DataPrep(num_sentences = 5, train_percentage = 0.7)
-    train_enc, train_dec, train_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data('english-german-both.pkl')
-    print("train set:")
-    print(train_set)
-    print()
-
-    print("train_enc:")
-    print(train_enc)
-    print(f"enc_seq_length: {enc_seq_length}, enc_vocab_size: {enc_vocab_size}")
-    print()
-
-    print("train_dec:")
-    print(train_dec)
-    print(f"dec_seq_length: {dec_seq_length}, dec_vocab_size: {dec_vocab_size}")
-
-
 def main():
-    test_Vocab()
+    data = DataPrep(num_sentences = 10000, train_percentage = 0.7)
+    train_enc, train_dec, train_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data('english-german-both.pkl')
 
 if __name__ == "__main__":
     main()
