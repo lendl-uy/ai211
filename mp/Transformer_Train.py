@@ -96,7 +96,7 @@ def main():
 
             target_labels = np.eye(dec_vocab_size)[batch_target_seq]
 
-            # Backward pass
+            # Backward pass: STILL NOT WORKING
             model.backward(batch_source_seq, batch_target_seq, loss, target_labels)  # Adjust target_labels as needed
 
             # Update parameters
