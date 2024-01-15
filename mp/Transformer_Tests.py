@@ -6,12 +6,14 @@
 
 # Transformer Implementation Tests
 
-from Transformer import *
+from Operational_Blocks import *
 from Transformer_Train import *
+
+dataset_path = "english-german-both.pkl"
     
 def test_Vocab():
     data = DataPrep(num_sentences = 5, train_percentage = 0.7)
-    train_enc, train_dec, train_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data('english-german-both.pkl')
+    train_enc, train_dec, train_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data(dataset_path)
     print("train set:")
     print(train_set)
     print()
@@ -27,7 +29,7 @@ def test_Vocab():
 
 def test_InputEmbed():
     data = DataPrep(num_sentences = 5, train_percentage = 0.7)
-    train_enc, train_dec, train_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data('english-german-both.pkl')
+    train_enc, train_dec, train_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data(dataset_path)
 
     print("train_enc:")
     print(train_enc)
@@ -41,7 +43,7 @@ def test_InputEmbed():
 
 def test_PosEmbed():
     data = DataPrep(num_sentences = 5, train_percentage = 0.7)
-    train_enc, train_dec, train_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data('english-german-both.pkl')
+    train_enc, train_dec, train_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data(dataset_path)
 
     print("train_enc:")
     print(train_enc)
@@ -62,7 +64,7 @@ def test_PosEmbed():
 
 def test_Attention():
     data = DataPrep(num_sentences = 5, train_percentage = 0.7)
-    train_enc, train_dec, train_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data('english-german-both.pkl')
+    train_enc, train_dec, train_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data(dataset_path)
 
     d_model = 12
     src_embed = InputEmbedding(d_model,enc_vocab_size)
@@ -72,15 +74,14 @@ def test_Attention():
     final_embed = src_pos(input_embed)
 
     num_heads = 4
-    src_multi_attention = MultiAttention(d_model, num_heads, masked = True)
+    src_multi_attention = MultiHeadAttention(d_model, num_heads, masked = True)
     attention_out  = src_multi_attention(final_embed, final_embed, final_embed)
 
     print("Attention Out Shape: ", attention_out.shape)
 
-
 def test_LayerNorm():
     data = DataPrep(num_sentences = 5, train_percentage = 0.7)
-    train_enc, train_dec, train_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data('english-german-both.pkl')
+    train_enc, train_dec, train_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data(dataset_path)
 
     d_model = 12
     src_embed = InputEmbedding(d_model,enc_vocab_size)
@@ -90,7 +91,7 @@ def test_LayerNorm():
     final_embed = src_pos(input_embed)
 
     num_heads = 4
-    src_multi_attention = MultiAttention(d_model, num_heads, masked = True)
+    src_multi_attention = MultiHeadAttention(d_model, num_heads, masked = True)
     attention_out  = src_multi_attention(final_embed, final_embed, final_embed)
 
     src_layer_norm = LayerNorm(d_model)
@@ -100,7 +101,7 @@ def test_LayerNorm():
 
 def test_NN():
     data = DataPrep(num_sentences = 5, train_percentage = 0.7)
-    train_enc, train_dec, train_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data('english-german-both.pkl')
+    train_enc, train_dec, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data(dataset_path)
 
     d_model = 12
     src_embed = InputEmbedding(d_model,enc_vocab_size)
@@ -110,7 +111,7 @@ def test_NN():
     final_embed = src_pos(input_embed)
 
     num_heads = 4
-    src_multi_attention = MultiAttention(d_model, num_heads, masked = True)
+    src_multi_attention = MultiHeadAttention(d_model, num_heads, masked = True)
     attention_out  = src_multi_attention(final_embed, final_embed, final_embed)
 
     src_layer_norm = LayerNorm(d_model)
@@ -121,8 +122,6 @@ def test_NN():
     NN_out = src_nn(normalized_out)
 
     print("NN Out Shape: ", NN_out.shape)
-
-
 
 def main():
     test_NN()
