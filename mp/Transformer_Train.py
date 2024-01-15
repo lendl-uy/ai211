@@ -9,8 +9,9 @@
 import os
 import pickle
 import numpy as np
-from Transformer import *
 
+from Operational_Blocks import Vocabulary
+from Transformer import Transformer
 
 class DataPrep:
     def __init__(self, num_sentences, train_percentage):
@@ -69,16 +70,14 @@ class DataPrep:
 
         return source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size
 
-
-
 def main():
     data = DataPrep(num_sentences = 10000, train_percentage = 0.7)
     source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data('english-german-both.pkl')
 
     model = Transformer(d_model = 512, num_heads = 4, d_ff = 2048, 
-                source_seq_length = enc_seq_length, target_seq_length = dec_seq_length, 
-                source_vocab_size = enc_vocab_size, target_vocab_size = dec_vocab_size, 
-                learning_rate = 0.01)
+                        source_seq_length = enc_seq_length, target_seq_length = dec_seq_length, 
+                        source_vocab_size = enc_vocab_size, target_vocab_size = dec_vocab_size, 
+                        learning_rate = 0.01)
     
     num_epochs = 1
     batch_size = 32 
