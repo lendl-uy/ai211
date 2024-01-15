@@ -1,4 +1,4 @@
-from Transformer import MultiHeadAttention, LayerNorm, FeedForward
+from Operational_Blocks import MultiHeadAttention, LayerNorm, FeedForward
 
 # Encoder Block
 class Decoder:
