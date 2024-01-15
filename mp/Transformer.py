@@ -5,12 +5,21 @@
 # Section: AI 211 FZZQ
 
 # Useful references:
+# [1] https://www.youtube.com/watch?v=ISNdQcPhsts&t=1372s
 
+# Import Python libraries
 import numpy as np
+
+# Import the encoder and decoder implementations
+from Encoder import Encoder
+from Decoder import Decoder
 np.set_printoptions(precision=4)
 
-# Calling the class instance is equivalent to doing a forward pass
+def softmax(self, x):
+    exp_x = np.exp(x - np.max(x, axis=-1, keepdims=True)) # subtract np.max for numerical stability
+    return exp_x / np.sum(exp_x, axis=-1, keepdims=True)
 
+# Calling the class instance is equivalent to doing a forward pass
 class Vocabulary:
     def __init__(self):
         self.token_to_index = {}
@@ -52,9 +61,6 @@ class Vocabulary:
             for token in tokens:
                 self.build_vocab(token)
 
-
-
-
 class InputEmbedding:
 
     def __init__ (self, d_model, vocab_size):
@@ -83,8 +89,6 @@ class InputEmbedding:
         np.add.at(self.grad_vocab_embedding, input_indices, grad_output)
 
         return self.grad_vocab_embedding
-    
-
 
 class PositionalEncoding:
         
@@ -107,18 +111,12 @@ class PositionalEncoding:
 
     def __call__(self,input_embeddings):
         pos_embed_3d = np.tile(self.pos_embed[np.newaxis, :, :], (input_embeddings.shape[0], 1, 1))
-        
         pos_embed_3d = np.tile(self.pos_embed[np.newaxis, :, :], (input_embeddings.shape[0], 1, 1))
-        
-
         input_embeddings += pos_embed_3d
+        
         return input_embeddings
 
-
-
-
-
-class MultiAttention:
+class MultiHeadAttention:
 
     def __init__(self, d_model, num_heads, masked = False): # d_model should be divisible by num_heads
         self.d_model = d_model
@@ -137,11 +135,6 @@ class MultiAttention:
         self.grad_W_k = np.zeros((d_model,d_model))
         self.grad_W_v = np.zeros((d_model,d_model))
         self.grad_W_o = np.zeros((d_model,d_model))
-    
-    def softmax(self, x):
-        exp_x = np.exp(x - np.max(x, axis=-1, keepdims=True)) # subtract np.max for numerical stability
-        return exp_x / np.sum(exp_x, axis=-1, keepdims=True)
-
 
     def attention(self, query, key, value, masked = False):
         d_k = query.shape[-1]
@@ -162,7 +155,7 @@ class MultiAttention:
             attention_scores = np.where(mask_4d == 0, -np.inf, attention_scores)
             attention_scores = attention_scores + 1e-12 # for numerical stability
 
-        attention_scores = self.softmax(attention_scores)
+        attention_scores = softmax(attention_scores)
         return attention_scores @ value
 
     def __call__(self, q, k, v):
@@ -208,7 +201,6 @@ class MultiAttention:
 
         return grad_query_input, grad_key_input, grad_value_input
 
-
 class LayerNorm:
 
     def __init__(self, d_model, eps = 10**-8):
@@ -218,7 +210,6 @@ class LayerNorm:
 
         self.grad_gamma = np.zeros(d_model)
         self.grad_beta = np.zeros(d_model)
-
 
     def __call__(self, input):
         self.input = input
@@ -249,8 +240,6 @@ class LayerNorm:
         grad_input = grad_normalized_input / (std + self.eps) + grad_std * 2.0 * diff_input_mean / self.input.shape[-1] + grad_mean / self.input.shape[-1]
 
         return grad_input
-    
-
 class FeedForward:
     def __init__(self, d_model, d_ff):
         self.linear1 = np.random.randn(d_model, d_ff)  # Weight matrix for the first linear layer
@@ -293,175 +282,6 @@ class FeedForward:
         grad_input = grad_relu_input.dot(self.linear1.T)
 
         return grad_input
-    
-class EncoderBlock:
-    def __init__(self, d_model, num_heads, d_ff):
-        self.d_model = d_model
-        self.num_heads = num_heads
-        self.d_ff = d_ff
-        self.d_k = d_model // num_heads
-
-        self.multi_attention = MultiAttention(d_model, num_heads)
-        self.norm1 = LayerNorm(d_model)
-        self.feed_forward = FeedForward(d_model, d_ff)
-        self.norm2 = LayerNorm(d_model)
-
-    def backward(self, grad_decoder_block):
-        # Backward pass through the decoder block
-
-        # Backward pass through the layer normalization after the final linear layer
-        grad_norm2 = self.norm2.backward(grad_decoder_block)
-
-        # Backward pass through the feedforward layer
-        grad_ff = self.feed_forward.backward(grad_norm2)
-
-        # Reshape grad_ff to match the shape before layer normalization
-        grad_ff_reshaped = grad_ff.reshape(grad_ff.shape[0], self.num_heads, self.d_k)
-
-        # Backward pass through the layer normalization before the multi-head attention
-        grad_norm1 = self.norm1.backward(grad_ff_reshaped)
-
-        # Backward pass through the multi-head attention
-        grad_multi_attention = self.multi_attention.backward(grad_norm1)
-
-        return grad_multi_attention
-
-    def update_parameters(self, learning_rate):
-        # SGD update for each parameter in the encoder block
-
-        # Multi-Head Attention
-        self.multi_attention.W_q -= learning_rate * self.multi_attention.grad_W_q
-        self.multi_attention.W_k -= learning_rate * self.multi_attention.grad_W_k
-        self.multi_attention.W_v -= learning_rate * self.multi_attention.grad_W_v
-        self.multi_attention.W_o -= learning_rate * self.multi_attention.grad_W_o
-
-        # Layer Norm 1
-        self.norm1.gamma -= learning_rate * self.norm1.grad_gamma
-        self.norm1.beta -= learning_rate * self.norm1.grad_beta
-
-        # Feed Forward
-        self.feed_forward.linear1 -= learning_rate * self.feed_forward.grad_linear1
-        self.feed_forward.linear2 -= learning_rate * self.feed_forward.grad_linear2
-        self.feed_forward.bias1 -= learning_rate * self.feed_forward.grad_bias1
-        self.feed_forward.bias2 -= learning_rate * self.feed_forward.grad_bias2
-
-        # Layer Norm 2
-        self.norm2.gamma -= learning_rate * self.norm2.grad_gamma
-        self.norm2.beta -= learning_rate * self.norm2.grad_beta
-
-
-    def __call__(self, input):
-        # Multi-Head Self Attention
-        attention_output = self.multi_attention(input, input, input)
-
-        # Residual Connection and Normalization
-        norm1_output = self.norm1(input + attention_output)
-
-        # Feed Forward
-        ff_output = self.feed_forward(norm1_output)
-
-        # Residual Connection and Normalization
-        encoder_output = self.norm2(norm1_output + ff_output)
-
-        return encoder_output
-
-class DecoderBlock:
-    def __init__(self, d_model, num_heads, d_ff):
-        self.d_model = d_model
-        self.num_heads = num_heads
-        self.d_ff = d_ff
-        self.d_k = d_model // num_heads
-
-        self.masked_multi_attention = MultiAttention(d_model, num_heads, masked=True)
-        self.norm1 = LayerNorm(d_model)
-        self.multi_attention = MultiAttention(d_model, num_heads)
-        self.norm2 = LayerNorm(d_model)
-        self.feed_forward = FeedForward(d_model, d_ff)
-        self.norm3 = LayerNorm(d_model)
-
-    def backward(self, grad_final_linear_layer):
-        # Backward pass through the decoder block
-
-        # Backward pass through the layer normalization after the final linear layer
-        grad_norm3 = self.norm3.backward(grad_final_linear_layer)
-
-        # Backward pass through the feedforward layer
-        grad_ff = self.feed_forward.backward(grad_norm3)
-
-        # Reshape grad_ff to match the shape before layer normalization
-        grad_ff_reshaped = grad_ff.reshape(grad_ff.shape[0], self.num_heads, self.d_k)
-
-        # Backward pass through the layer normalization before the multi-head attention
-        grad_norm2 = self.norm2.backward(grad_ff_reshaped)
-
-        # Backward pass through the multi-head attention
-        grad_multi_attention = self.multi_attention.backward(grad_norm2)
-
-        # Backward pass through the layer normalization before the masked multi-head attention
-        grad_norm1 = self.norm1.backward(grad_multi_attention[0])
-
-        # Backward pass through the masked multi-head attention
-        grad_masked_multi_attention = self.masked_multi_attention.backward(grad_norm1)
-
-        return grad_multi_attention[1], grad_masked_multi_attention[0] # first gradient is for encoder block, second one is for target embedding
-
-    def update_parameters(self, learning_rate):
-        # SGD update for each parameter in the encoder block
-
-        # Masked Multi-Head Attention
-        self.masked_multi_attention.W_q -= learning_rate * self.masked_multi_attention.grad_W_q
-        self.masked_multi_attention.W_k -= learning_rate * self.masked_multi_attention.grad_W_k
-        self.masked_multi_attention.W_v -= learning_rate * self.masked_multi_attention.grad_W_v
-        self.masked_multi_attention.W_o -= learning_rate * self.masked_multi_attention.grad_W_o
-
-        # Layer Norm 1
-        self.norm1.gamma -= learning_rate * self.norm1.grad_gamma
-        self.norm1.beta -= learning_rate * self.norm1.grad_beta
-
-        # Multi-Head Attention
-        self.multi_attention.W_q -= learning_rate * self.multi_attention.grad_W_q
-        self.multi_attention.W_k -= learning_rate * self.multi_attention.grad_W_k
-        self.multi_attention.W_v -= learning_rate * self.multi_attention.grad_W_v
-        self.multi_attention.W_o -= learning_rate * self.multi_attention.grad_W_o
-
-        # Layer Norm 2
-        self.norm2.gamma -= learning_rate * self.norm2.grad_gamma
-        self.norm2.beta -= learning_rate * self.norm2.grad_beta
-
-        # Feed Forward
-        self.feed_forward.linear1 -= learning_rate * self.feed_forward.grad_linear1
-        self.feed_forward.linear2 -= learning_rate * self.feed_forward.grad_linear2
-        self.feed_forward.bias1 -= learning_rate * self.feed_forward.grad_bias1
-        self.feed_forward.bias2 -= learning_rate * self.feed_forward.grad_bias2
-
-        # Layer Norm 3
-        self.norm3.gamma -= learning_rate * self.norm3.grad_gamma
-        self.norm3.beta -= learning_rate * self.norm3.grad_beta
-
-        
-
-    def __call__(self, encoder_output, decoder_input):
-        # Masked Multi-Head Self Attention
-        masked_attention_output = self.masked_multi_attention(decoder_input, decoder_input, decoder_input)
-
-        # Residual Connection and Normalization
-        norm1_output = self.norm1(decoder_input + masked_attention_output)
-
-        # Multi-Head Encoder-Decoder Attention
-        attention_output = self.multi_attention(norm1_output, encoder_output, encoder_output)
-
-        # Residual Connection and Normalization
-        norm2_output = self.norm2(norm1_output + attention_output)
-
-        # Feed Forward
-        ff_output = self.feed_forward(norm2_output)
-
-        # Residual Connection and Normalization
-        decoder_output = self.norm3(norm2_output + ff_output)
-
-        return decoder_output
-
-
 class LinearLayer:
     def __init__(self, input_size, output_size):
         self.weights = np.random.randn(input_size, output_size) / np.sqrt(input_size)
@@ -496,9 +316,6 @@ class LinearLayer:
         self.weights -= learning_rate * self.grad_weights
         self.bias -= learning_rate * self.grad_bias
 
-
-
-
 class Transformer:
     def __init__(self, d_model, num_heads, d_ff, source_seq_length, target_seq_length, source_vocab_size, target_vocab_size, learning_rate = 0.01):
         self.d_model = d_model
@@ -519,20 +336,13 @@ class Transformer:
         self.target_positional_encoding = PositionalEncoding(d_model, target_seq_length)
 
         # Encoder Block
-        self.encoder_block = EncoderBlock(d_model, num_heads, d_ff)
+        self.encoder_block = Encoder(d_model, num_heads, d_ff)
 
         # Decoder Block
-        self.decoder_block = DecoderBlock(d_model, num_heads, d_ff)
+        self.decoder_block = Decoder(d_model, num_heads, d_ff)
 
         # Final Linear Layer for Output
         self.final_linear_layer = LinearLayer(d_model, target_vocab_size)
-
-
-    def softmax(self, x, mask = None):
-        if mask is not None:
-            x = x * mask
-        exp_x = np.exp(x - np.max(x, axis=-1, keepdims=True)) # subtract np.max for numerical stability
-        return exp_x / np.sum(exp_x, axis=-1, keepdims=True)
     
     def cross_entropy_loss(self, logits, labels, mask=None):
         if mask is not None:
@@ -560,10 +370,9 @@ class Transformer:
         # Final Linear Layer for Output
         output_logits = self.final_linear_layer(decoder_output)
 
-
         # Apply Softmax to get probabilities
         target_mask = (target_seq != 0)
-        output_probs = self.softmax(output_logits, mask = target_mask)
+        output_probs = softmax(output_logits, mask = target_mask)
 
         # One-hot encode the target sequence for the cross-entropy loss
         target_probs = np.eye(self.target_vocab_size)[target_seq]
@@ -580,8 +389,6 @@ class Transformer:
         # if target_labels is not None:
         #     batch_size = len(source_seq)
         #     grad_output_logits = (loss - target_labels) / batch_size
-
-        
 
         grad_final_linear_layer = self.final_linear_layer.backward(loss)
 
@@ -611,7 +418,3 @@ class Transformer:
 
         # Final Linear Layer
         self.final_linear_layer.update_parameters(learning_rate)
-
-
-
-
