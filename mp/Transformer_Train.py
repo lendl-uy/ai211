@@ -10,6 +10,7 @@ import os
 import pickle
 import numpy as np
 
+from Transformer_Constants import *
 from Operational_Blocks import Vocabulary
 from Transformer import Transformer
 
@@ -71,24 +72,21 @@ class DataPrep:
         return source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size
 
 def main():
-    data = DataPrep(num_sentences = 10000, train_percentage = 0.7)
+    data = DataPrep(num_sentences = SENTENCE_LENGTH, train_percentage = TRAIN_PERCENTAGE)
     source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data('english-german-both.pkl')
-
-    model = Transformer(d_model = 512, num_heads = 4, d_ff = 2048, 
+    
+    model = Transformer(d_model = D_MODEL, num_heads = HEADS, d_ff = D_FF, 
                         source_seq_length = enc_seq_length, target_seq_length = dec_seq_length, 
                         source_vocab_size = enc_vocab_size, target_vocab_size = dec_vocab_size, 
-                        learning_rate = 0.01)
+                        learning_rate = LEARNING_RATE)
     
-    num_epochs = 1
-    batch_size = 32 
-
-    for epoch in range(num_epochs):
+    for epoch in range(EPOCHS):
         total_loss = 0.0
 
         # Iterate over batches
-        for i in range(0, len(source_seq), batch_size):
-            batch_source_seq = source_seq[i:i + batch_size]
-            batch_target_seq = target_seq[i:i + batch_size]
+        for i in range(0, len(source_seq), BATCH_SIZE):
+            batch_source_seq = source_seq[i:i + BATCH_SIZE]
+            batch_target_seq = target_seq[i:i + BATCH_SIZE]
 
             # Forward pass
             loss = model(batch_source_seq, batch_target_seq)
@@ -99,11 +97,13 @@ def main():
             model.backward(batch_source_seq, batch_target_seq, loss, target_labels)  # Adjust target_labels as needed
 
             # Update parameters
-            model.update_parameters()
+            model.update_parameters(LEARNING_RATE)
 
             total_loss += loss
+            
+            print(f"Done Batch {i+1}")
 
-        average_loss = total_loss / (len(source_seq) // batch_size)
+        average_loss = total_loss / (len(source_seq) // BATCH_SIZE)
         print(f'Epoch {epoch + 1}, Average Loss: {average_loss}')
 
 
