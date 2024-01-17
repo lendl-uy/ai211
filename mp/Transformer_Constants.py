@@ -1,8 +1,11 @@
 # Transformer Architecture Constants
 
+# Path to the dataset
+DATASET_PATH = "english-german-both.pkl"
+
 # Training constants
 EPOCHS = 1
-BATCH_SIZE = 1 # 32 original value
+BATCH_SIZE = 2 # 32 original value
 TRAIN_PERCENTAGE = 0.7
 
 # Input constants
