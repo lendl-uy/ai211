@@ -13,6 +13,11 @@ def softmax(x, mask=None):
         x = x * mask
     exp_x = np.exp(x - np.max(x, axis=-1, keepdims=True)) # subtract np.max for numerical stability
     return exp_x / np.sum(exp_x, axis=-1, keepdims=True)
+
+def softmax_derivative(x):
+    s = softmax(x)
+    return s * (np.eye(s.shape[1]) - s[:, np.newaxis, :])
+
 class InputEmbedding:
 
     def __init__ (self, d_model, vocab_size):
@@ -22,13 +27,14 @@ class InputEmbedding:
         self.vocab_size = vocab_size
 
         glorot_scale = np.sqrt(2.0 / (vocab_size + d_model)) # common std for initialization
-        self.vocab_embedding = np.random.normal(0,glorot_scale,(vocab_size,d_model))
+        self.vocab_embedding = np.random.normal(0, glorot_scale, (vocab_size, d_model))
 
-        self.grad_vocab_embedding = np.zeros((vocab_size,d_model))
+        self.grad_vocab_embedding = np.zeros((vocab_size, d_model))
 
     def embedding(self, input_indices):
         input_indices = np.array(input_indices)
         embedded_output = self.vocab_embedding[input_indices]
+
         return embedded_output
     
     def __call__(self, input_indices):
@@ -61,7 +67,7 @@ class PositionalEncoding:
         # print("pos_embed: \n",self.pos_embed)
         # print("pos embed shape: \n",self.pos_embed.shape)
 
-    def __call__(self,input_embeddings):
+    def __call__(self, input_embeddings):
         pos_embed_3d = np.tile(self.pos_embed[np.newaxis, :, :], (input_embeddings.shape[0], 1, 1))
         pos_embed_3d = np.tile(self.pos_embed[np.newaxis, :, :], (input_embeddings.shape[0], 1, 1))
         input_embeddings += pos_embed_3d
@@ -79,16 +85,16 @@ class MultiHeadAttention:
         # Xavier Initialization of Weight Matrices
         # Suited for Layers with Softmax Functions
         # Create weight matrices w/ dim d_model x d_model and scaled by 1/sqrt(d_model) (common practice)
-        self.W_q = np.random.randn(d_model,d_model) / np.sqrt(d_model)
-        self.W_k = np.random.randn(d_model,d_model) / np.sqrt(d_model)
-        self.W_v = np.random.randn(d_model,d_model) / np.sqrt(d_model)
-        self.W_o = np.random.randn(d_model,d_model) / np.sqrt(d_model)
+        self.W_q = np.random.randn(d_model, d_model) / np.sqrt(d_model)
+        self.W_k = np.random.randn(d_model, d_model) / np.sqrt(d_model)
+        self.W_v = np.random.randn(d_model, d_model) / np.sqrt(d_model)
+        self.W_o = np.random.randn(d_model, d_model) / np.sqrt(d_model)
 
         # Create vars to store grads of the weight matrices
-        self.grad_W_q = np.zeros((d_model,d_model))
-        self.grad_W_k = np.zeros((d_model,d_model))
-        self.grad_W_v = np.zeros((d_model,d_model))
-        self.grad_W_o = np.zeros((d_model,d_model))
+        self.grad_W_q = np.zeros((d_model, d_model))
+        self.grad_W_k = np.zeros((d_model, d_model))
+        self.grad_W_v = np.zeros((d_model, d_model))
+        self.grad_W_o = np.zeros((d_model, d_model))
 
     def attention(self, query, key, value, masked = False):
         d_k = query.shape[-1]
@@ -126,7 +132,7 @@ class MultiHeadAttention:
         self.attention_out = attention_out.reshape(attention_out.shape[0],attention_out.shape[1], self.d_model)
 
         return self.attention_out @ self.W_o
-    
+
     def backward(self, grad_output):
         # Backward pass
 
@@ -243,12 +249,15 @@ class FeedForward:
     
 class LinearLayer:
     def __init__(self, input_size, output_size):
-        self.weights = np.random.randn(input_size, output_size) / np.sqrt(input_size)
+        self.weights = np.random.randn(input_size, output_size) / np.sqrt(2/(input_size+output_size))
         self.bias = np.zeros((1, output_size))
 
         # Gradients
         self.grad_weights = np.zeros_like(self.weights)
         self.grad_bias = np.zeros_like(self.bias)
+
+        print(f"self.grad_weights = {self.grad_weights}")
+        print(f"self.grad_bias = {self.grad_bias}")
 
     def __call__(self, input):
         self.input = input
@@ -258,13 +267,8 @@ class LinearLayer:
         # Compute gradients
         batch_size = len(self.input)
 
-        print(self.weights.shape)
-
-        self.grad_weights = np.sum(self.input.transpose(0,2,1) * grad_output, axis=0) / batch_size
+        self.grad_weights = np.sum(self.input.transpose(0,2,1) @ grad_output, axis=0) / batch_size
         self.grad_bias = np.sum(grad_output, axis=0, keepdims=True) / batch_size
-
-        print(f'grad weights: \n {self.grad_weights.shape}')
-        print(f'grad bias: \n{self.grad_bias}')
 
         # Backpropagate the gradient
         grad_input = grad_output * self.weights.T
