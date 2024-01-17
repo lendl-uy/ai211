@@ -10,24 +10,24 @@ class Encoder:
         self.d_k = d_model // num_heads
 
         self.multi_attention = MultiHeadAttention(d_model, num_heads)
-        self.norm1 = LayerNorm(d_model)
+        self.norm_1 = LayerNorm(d_model)
         self.feed_forward = FeedForward(d_model, d_ff)
-        self.norm2 = LayerNorm(d_model)
+        self.norm_2 = LayerNorm(d_model)
 
     def backward(self, grad_decoder_block):
         # Backward pass through the decoder block
 
         # Backward pass through the layer normalization after the final linear layer
-        grad_norm2 = self.norm2.backward(grad_decoder_block)
+        grad_norm_2 = self.norm_2.backward(grad_decoder_block)
 
         # Backward pass through the feedforward layer
-        grad_ff = self.feed_forward.backward(grad_norm2)
+        grad_ff = self.feed_forward.backward(grad_norm_2)
 
         # Reshape grad_ff to match the shape before layer normalization
         grad_ff_reshaped = grad_ff.reshape(grad_ff.shape[0], self.num_heads, self.d_k)
 
         # Backward pass through the layer normalization before the multi-head attention
-        grad_norm1 = self.norm1.backward(grad_ff_reshaped)
+        grad_norm1 = self.norm_1.backward(grad_ff_reshaped)
 
         # Backward pass through the multi-head attention
         grad_multi_attention = self.multi_attention.backward(grad_norm1)
@@ -44,8 +44,8 @@ class Encoder:
         self.multi_attention.W_o -= learning_rate * self.multi_attention.grad_W_o
 
         # Layer Norm 1
-        self.norm1.gamma -= learning_rate * self.norm1.grad_gamma
-        self.norm1.beta -= learning_rate * self.norm1.grad_beta
+        self.norm_1.gamma -= learning_rate * self.norm_1.grad_gamma
+        self.norm_1.beta -= learning_rate * self.norm_1.grad_beta
 
         # Feed Forward
         self.feed_forward.linear1 -= learning_rate * self.feed_forward.grad_linear1
@@ -54,20 +54,20 @@ class Encoder:
         self.feed_forward.bias2 -= learning_rate * self.feed_forward.grad_bias2
 
         # Layer Norm 2
-        self.norm2.gamma -= learning_rate * self.norm2.grad_gamma
-        self.norm2.beta -= learning_rate * self.norm2.grad_beta
+        self.norm_2.gamma -= learning_rate * self.norm_2.grad_gamma
+        self.norm_2.beta -= learning_rate * self.norm_2.grad_beta
 
     def __call__(self, input):
         # Multi-Head Self Attention
         attention_output = self.multi_attention(input, input, input)
 
         # Residual Connection and Normalization
-        norm1_output = self.norm1(input + attention_output)
+        norm1_output = self.norm_1(input + attention_output)
 
         # Feed Forward
         ff_output = self.feed_forward(norm1_output)
 
         # Residual Connection and Normalization
-        encoder_output = self.norm2(norm1_output + ff_output)
+        encoder_output = self.norm_2(norm1_output + ff_output)
 
         return encoder_output
