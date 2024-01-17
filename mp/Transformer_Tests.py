@@ -6,71 +6,71 @@
 
 # Transformer Implementation Tests
 
+from Transformer_Constants import *
 from Operational_Blocks import *
 from Transformer_Train import *
 
 dataset_path = "english-german-both.pkl"
     
-def test_Vocab():
-    data = DataPrep(num_sentences = 5, train_percentage = 0.7)
-    train_enc, train_dec, train_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data(dataset_path)
+def construct_vocabulary():
+    data = DataPrep(num_sentences = SENTENCE_LENGTH, train_percentage = TRAIN_PERCENTAGE)
+    source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data(dataset_path)
     print("train set:")
     print(train_set)
     print()
 
     print("train_enc:")
-    print(train_enc)
+    print(source_seq)
     print(f"enc_seq_length: {enc_seq_length}, enc_vocab_size: {enc_vocab_size}")
     print()
 
     print("train_dec:")
-    print(train_dec)
+    print(target_labels)
     print(f"dec_seq_length: {dec_seq_length}, dec_vocab_size: {dec_vocab_size}")
 
-def test_InputEmbed():
-    data = DataPrep(num_sentences = 5, train_percentage = 0.7)
-    train_enc, train_dec, train_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data(dataset_path)
+def construct_input_embeddings():
+    data = DataPrep(num_sentences = SENTENCE_LENGTH, train_percentage = TRAIN_PERCENTAGE)
+    source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data(dataset_path)
 
     print("train_enc:")
-    print(train_enc)
+    print(source_seq)
     print()
 
-    d_model = 10
-    src_embed = InputEmbedding(d_model,enc_vocab_size)
+    src_embed = InputEmbedding(D_MODEL, enc_vocab_size)
     print("Input Embedding:\n")
-    print(src_embed.embedding(train_enc))
-    print("Shape: ",src_embed.embedding(train_enc).shape)
+    print(src_embed.embedding(source_seq))
+    print("Shape: ",src_embed.embedding(source_seq).shape)
 
-def test_PosEmbed():
-    data = DataPrep(num_sentences = 5, train_percentage = 0.7)
-    train_enc, train_dec, train_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data(dataset_path)
+def construct_positional_encodings():
+    data = DataPrep(num_sentences = SENTENCE_LENGTH, train_percentage = TRAIN_PERCENTAGE)
+    source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data(dataset_path)
 
     print("train_enc:")
-    print(train_enc)
+    print(source_seq)
     print()
 
     print("Enc_seq_length: ",enc_seq_length)
 
     d_model = 10
-    src_embed = InputEmbedding(d_model,enc_vocab_size)
-    input_embed = src_embed.embedding(train_enc)
+    src_embed = InputEmbedding(D_MODEL, enc_vocab_size)
+    input_embed = src_embed.embedding(source_seq)
     print("\nInput Embedding:\n")
     print(input_embed)
 
-    src_pos = PositionalEncoding(d_model,enc_seq_length)
+    src_pos = PositionalEncoding(D_MODEL, enc_seq_length)
     final_embed = src_pos(input_embed)
     print("\nFinal Embedding:\n",final_embed)
     print("Final Embedding Shape: ",final_embed.shape)
 
-def test_Attention():
-    data = DataPrep(num_sentences = 5, train_percentage = 0.7)
-    train_enc, train_dec, train_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data(dataset_path)
+def construct_multi_head_attention_matrix():
+    data = DataPrep(num_sentences = SENTENCE_LENGTH, train_percentage = TRAIN_PERCENTAGE)
+    source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data(dataset_path)
 
     d_model = 12
-    src_embed = InputEmbedding(d_model,enc_vocab_size)
-    input_embed = src_embed.embedding(train_enc)
+    src_embed = InputEmbedding(D_MODEL, enc_vocab_size)
+    input_embed = src_embed.embedding(source_seq)
 
-    src_pos = PositionalEncoding(d_model,enc_seq_length)
+    src_pos = PositionalEncoding(D_MODEL, enc_seq_length)
     final_embed = src_pos(input_embed)
 
     num_heads = 4
@@ -79,15 +79,15 @@ def test_Attention():
 
     print("Attention Out Shape: ", attention_out.shape)
 
-def test_LayerNorm():
-    data = DataPrep(num_sentences = 5, train_percentage = 0.7)
-    train_enc, train_dec, train_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data(dataset_path)
+def perform_layer_normalization():
+    data = DataPrep(num_sentences = SENTENCE_LENGTH, train_percentage = TRAIN_PERCENTAGE)
+    source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data(dataset_path)
 
     d_model = 12
-    src_embed = InputEmbedding(d_model,enc_vocab_size)
-    input_embed = src_embed.embedding(train_enc)
+    src_embed = InputEmbedding(D_MODEL, enc_vocab_size)
+    input_embed = src_embed.embedding(source_seq)
 
-    src_pos = PositionalEncoding(d_model,enc_seq_length)
+    src_pos = PositionalEncoding(D_MODEL, enc_seq_length)
     final_embed = src_pos(input_embed)
 
     num_heads = 4
@@ -99,32 +99,34 @@ def test_LayerNorm():
 
     print("Normalized Out Shape: ", normalized_out.shape)
 
-def test_NN():
-    data = DataPrep(num_sentences = 5, train_percentage = 0.7)
-    train_enc, train_dec, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data(dataset_path)
+def construct_encoder():
+    data = DataPrep(num_sentences = SENTENCE_LENGTH, train_percentage = TRAIN_PERCENTAGE)
+    source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data(dataset_path)
 
-    d_model = 12
-    src_embed = InputEmbedding(d_model,enc_vocab_size)
-    input_embed = src_embed.embedding(train_enc)
+    src_embed = InputEmbedding(D_MODEL ,enc_vocab_size)
+    input_embed = src_embed.embedding(source_seq)
 
-    src_pos = PositionalEncoding(d_model,enc_seq_length)
+    src_pos = PositionalEncoding(D_MODEL, enc_seq_length)
     final_embed = src_pos(input_embed)
 
-    num_heads = 4
-    src_multi_attention = MultiHeadAttention(d_model, num_heads, masked = True)
+    src_multi_attention = MultiHeadAttention(D_MODEL, HEADS, masked = True)
     attention_out  = src_multi_attention(final_embed, final_embed, final_embed)
 
-    src_layer_norm = LayerNorm(d_model)
+    src_layer_norm = LayerNorm(D_MODEL)
     normalized_out = src_layer_norm(attention_out)
 
-    d_ff = 2048
-    src_nn = FeedForward(d_model, d_ff)
+    src_nn = FeedForward(D_MODEL, D_FF)
     NN_out = src_nn(normalized_out)
 
     print("NN Out Shape: ", NN_out.shape)
 
 def main():
-    test_NN()
+    # construct_vocabulary()
+    # construct_input_embeddings()
+    # construct_positional_encodings()
+    construct_multi_head_attention_matrix()
+    # perform_layer_normalization()
+    # construct_encoder()
 
 if __name__ == "__main__":
     main()
