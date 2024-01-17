@@ -54,7 +54,7 @@ class Vocabulary:
             for token in tokens:
                 self.build_vocab(token)
 
-class DataPrep:
+class DataPreparation:
     def __init__(self, num_sentences, train_percentage):
         self.num_sentences = num_sentences
         self.train_percentage = train_percentage
@@ -81,6 +81,9 @@ class DataPrep:
         
         dataset = pickle.load(open(os.path.join(__location__, file), 'rb'))
         np.random.shuffle(dataset)
+
+        # Column 1 contains encoder input data
+        # Column 2 contains decoder input data
         final_data = dataset[:self.num_sentences,:]
 
         # Append <SOS> and <EOS> tags to start and end of sentences resp.
@@ -112,7 +115,7 @@ class DataPrep:
         return source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size
 
 def main():
-    data = DataPrep(num_sentences = SENTENCE_LENGTH, train_percentage = TRAIN_PERCENTAGE)
+    data = DataPreparation(num_sentences = SENTENCE_LENGTH, train_percentage = TRAIN_PERCENTAGE)
     source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data('english-german-both.pkl')
     
     model = Transformer(d_model = D_MODEL, num_heads = HEADS, d_ff = D_FF, 
@@ -121,6 +124,7 @@ def main():
                         learning_rate = LEARNING_RATE)
     
     for epoch in range(EPOCHS):
+
         total_loss = 0.0
 
         # Iterate over batches
@@ -129,17 +133,19 @@ def main():
             batch_target_seq = target_seq[i:i + BATCH_SIZE]
 
             # Forward pass
-            loss = model(batch_source_seq, batch_target_seq)
+            model_output = model(batch_source_seq, batch_target_seq)
 
             target_labels = np.eye(dec_vocab_size)[batch_target_seq]
 
+            # print(f"target_labels = {target_labels}")
+
             # Backward pass: STILL NOT WORKING
-            model.backward(batch_source_seq, batch_target_seq, loss, target_labels)  # Adjust target_labels as needed
+            model.backward(batch_source_seq, batch_target_seq, model_output, target_labels)  # Adjust target_labels as needed
 
             # Update parameters
             model.update_parameters(LEARNING_RATE)
 
-            total_loss += loss
+            total_loss += model.get_loss()
             
             print(f"Done Batch {i+1}")
 

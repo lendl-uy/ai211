@@ -30,6 +30,7 @@ class Transformer:
         self.source_vocab_size = source_vocab_size
         self.target_vocab_size = target_vocab_size
         self.learning_rate = learning_rate
+        self._loss = 0.0
 
         # Input Embedding
         self.source_embedding = InputEmbedding(d_model, source_vocab_size)
@@ -53,9 +54,24 @@ class Transformer:
             logits = logits * mask
             labels = labels * mask
         logits = np.clip(logits, 1e-12, 1.0 - 1e-12)  # for numerical stability
-        loss = -np.sum(labels * np.log(logits)) / len(logits)
-        return loss
 
+        # H(p, q) = -1/N Sum(p(x)log(q(x)))
+        # p is the truth value
+        # q is the predicted value
+        loss = -1/len(logits) * np.sum(labels * np.log(logits))
+        return loss
+    
+    def cross_entropy_derivative(self, logits, labels):
+        # Avoid division by zero by clipping probabilities
+        logits = np.clip(logits, 1e-12, 1.0 - 1e-12)
+        
+        # Compute the derivative of categorical cross entropy loss
+        return -labels/logits
+    
+    def get_loss(self):
+
+        return self._loss
+        
     def __call__(self, source_seq, target_seq):
         # Input Embedding
         source_embedded = self.source_embedding(source_seq)
@@ -81,32 +97,33 @@ class Transformer:
         # One-hot encode the target sequence for the cross-entropy loss
         target_probs = np.eye(self.target_vocab_size)[target_seq]
 
+        self._loss = self.cross_entropy_loss(output_probs, target_probs, target_mask)
+
+        return output_probs
+
         # Compute the cross-entropy loss
-        loss = self.cross_entropy_loss(output_probs, target_probs, mask=target_mask)
+        # loss = self.cross_entropy_loss(output_probs, target_probs, mask=target_mask)
 
-        print(f'loss: {loss}')
-
-        return loss
+        # return loss
     
-    def backward(self, source_seq, target_seq, loss, target_labels):
+    def backward(self, source_seq, target_seq, output_probs, target_labels):
         # Compute gradient of the loss with respect to the final logits and backprop through rest of the architecture
-        # if target_labels is not None:
-        #     batch_size = len(source_seq)
-        #     grad_output_logits = (loss - target_labels) / batch_size
+        batch_size = len(source_seq)
+        grad_output_logits = self.cross_entropy_derivative(output_probs, target_labels) / batch_size
 
-        grad_final_linear_layer = self.final_linear_layer.backward(loss)
+        grad_final_linear_layer = self.final_linear_layer.backward(grad_output_logits)
 
-        grad_decoder_block = self.decoder_block.backward(grad_final_linear_layer) # will output two grads: first one for encoder block and second one for target embedding
+        # grad_decoder_block = self.decoder_block.backward(grad_final_linear_layer) # will output two grads: first one for encoder block and second one for target embedding
 
-        grad_encoder_block = self.encoder_block.backward(grad_decoder_block[0])
+        # grad_encoder_block = self.encoder_block.backward(grad_decoder_block[0])
 
-        grad_source_embedded = self.source_embedding.backward(source_seq, grad_encoder_block)
-        grad_target_embedded = self.target_embedding.backward(target_seq, grad_decoder_block[1])
+        # grad_source_embedded = self.source_embedding.backward(source_seq, grad_encoder_block)
+        # grad_target_embedded = self.target_embedding.backward(target_seq, grad_decoder_block[1])
 
-        self.source_embedding.grad_vocab_embedding = grad_source_embedded
-        self.target_embedding.grad_vocab_embedding = grad_target_embedded
+        # self.source_embedding.grad_vocab_embedding = grad_source_embedded
+        # self.target_embedding.grad_vocab_embedding = grad_target_embedded
 
-        self.update_parameters(self.learning_rate)
+        # self.update_parameters(self.learning_rate)
 
     def update_parameters(self, learning_rate):
 
