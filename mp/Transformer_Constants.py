@@ -1,3 +1,5 @@
+# Transformer Architecture Constants
+
 # Training constants
 EPOCHS = 1
 BATCH_SIZE = 1 # 32 original value

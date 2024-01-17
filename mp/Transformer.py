@@ -1,8 +1,10 @@
 # AI 211 MACHINE PROBLEM 
 # Code Authors
 # [1] Jan Lendl R. Uy, 2019-00312
-# [2] Ryan Roi Cayas, 2023-XXXXX
+# [2] Ryan Roi Cayas, 2022-22085
 # Section: AI 211 FZZQ
+
+# Transformer Implementation
 
 # Useful references:
 # [1] https://www.youtube.com/watch?v=ISNdQcPhsts&t=1372s

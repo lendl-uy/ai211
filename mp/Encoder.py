@@ -1,6 +1,7 @@
+# Encoder Architecture Implementation
+
 from Operational_Blocks import MultiHeadAttention, LayerNorm, FeedForward
 
-# Encoder Block
 class Encoder:
     def __init__(self, d_model, num_heads, d_ff):
         self.d_model = d_model

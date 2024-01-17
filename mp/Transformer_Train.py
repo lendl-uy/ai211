@@ -1,7 +1,7 @@
 # AI 211 MACHINE PROBLEM 
 # Code Authors
 # [1] Jan Lendl R. Uy, 2019-00312
-# [2] Ryan Roi Cayas, 2022-22582
+# [2] Ryan Roi Cayas, 2022-22085
 # Section: AI 211 FZZQ
 
 # Training the Transformer
