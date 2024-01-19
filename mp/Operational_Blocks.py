@@ -153,7 +153,6 @@ class MultiHeadAttention:
         grad_query_prime = grad_attention_scores @ np.transpose(self.W_q)
         grad_key_prime = grad_attention_scores[:,:self.source_seq_length,:] @ np.transpose(self.W_k)
         grad_value_prime = grad_attention_scores[:,:self.source_seq_length,:] @ np.transpose(self.W_v)
-
         
         # Clip grads if it explodes
         grad_query_prime_norm = np.linalg.norm(grad_query_prime)
@@ -168,13 +167,10 @@ class MultiHeadAttention:
         if grad_value_prime_norm > THRESHOLD: 
             grad_value_prime *= (THRESHOLD / grad_value_prime_norm)
 
-
-
         # # Backward pass through the weight matrices W_q, W_k, and W_v
         self.grad_W_q = np.sum(self.query.transpose(0, 2, 1) @ grad_query_prime, axis = 0)
         self.grad_W_k = np.sum(self.key.transpose(0, 2, 1) @ grad_key_prime, axis = 0)
         self.grad_W_v = np.sum(self.value.transpose(0, 2, 1) @ grad_value_prime, axis = 0)
-
 
         # Clip grads if it explodes
         grad_W_q_norm = np.linalg.norm(self.grad_W_q)
@@ -188,7 +184,6 @@ class MultiHeadAttention:
         grad_W_v_norm = np.linalg.norm(self.grad_W_v)
         if grad_W_v_norm > THRESHOLD: 
             self.grad_W_v *= (THRESHOLD / grad_W_v_norm)
-
 
         # Compute gradients for the input queries, keys, and values
         grad_query_input = grad_query_prime @ self.W_q.T
@@ -235,6 +230,15 @@ class LayerNorm:
         self.grad_gamma = self.grad_gamma.squeeze()
         self.grad_beta = self.grad_beta.squeeze()
 
+        # Clip grads if it explodes
+        grad_gamma_norm = np.linalg.norm(self.grad_gamma)
+        if grad_gamma_norm > THRESHOLD: 
+            self.grad_gamma *= (THRESHOLD / grad_gamma_norm)
+
+        grad_beta_norm = np.linalg.norm(self.grad_beta)
+        if grad_beta_norm > THRESHOLD: 
+            self.grad_beta *= (THRESHOLD / grad_beta_norm)
+
         # Compute gradient of the loss with respect to the normalized input
         grad_normalized_input = upstream_gradient * self.gamma
 
@@ -245,8 +249,22 @@ class LayerNorm:
         grad_std = -0.5 * np.sum(grad_normalized_input * diff_input_mean / (std + self.eps)**3, axis=-1, keepdims=True)
         grad_mean = -np.sum(grad_normalized_input / (std + self.eps), axis=-1, keepdims=True) - 2.0 * grad_std * np.mean(diff_input_mean, axis=-1, keepdims=True)
 
+        # Clip grads if it explodes
+        grad_std_norm = np.linalg.norm(grad_std)
+        if grad_std_norm > THRESHOLD: 
+            grad_std *= (THRESHOLD / grad_std_norm)
+
+        grad_mean_norm = np.linalg.norm(grad_mean)
+        if grad_mean_norm > THRESHOLD: 
+            grad_mean *= (THRESHOLD / grad_mean_norm)
+
         # Compute gradient of the loss with respect to the input
         grad_input = grad_normalized_input / (std + self.eps) + grad_std * 2.0 * diff_input_mean / self.input.shape[-1] + grad_mean / self.input.shape[-1]
+
+        # Clip grads if it explodes
+        grad_input_norm = np.linalg.norm(grad_input)
+        if grad_input_norm > THRESHOLD: 
+            grad_input *= (THRESHOLD / grad_input_norm)
 
         # print(f'grad input = {grad_input.shape}') #batch size, max seq, d_model
         return grad_input
@@ -302,6 +320,11 @@ class FeedForward:
         self.grad_biases_2 = np.sum(upstream_gradient, axis=(0,1), keepdims=True)
         self.grad_biases_2 = np.squeeze(self.grad_biases_2, axis=0)
 
+        # Clip grads if it explodes
+        grad_weights_2_norm = np.linalg.norm(self.grad_weights_2)
+        if grad_weights_2_norm > THRESHOLD: 
+            self.grad_weights_2 *= (THRESHOLD / grad_weights_2_norm)
+
         # i = upstream_gradient.shape[0]
         # j, k = self.weights_2.shape
         # upstream_gradient = upstream_gradient @ np.broadcast_to(self.weights_2, (i,j,k)).transpose(0,2,1)
@@ -312,6 +335,10 @@ class FeedForward:
         upstream_gradient = relu_derivative * upstream_gradient
         upstream_gradient = upstream_gradient @ self.weights_2.transpose()
 
+        # Clip grads if it explodes
+        upstream_gradient_norm = np.linalg.norm(upstream_gradient)
+        if upstream_gradient_norm > THRESHOLD: 
+            upstream_gradient *= (THRESHOLD / upstream_gradient_norm)
 
         # Backward pass through the first linear layer
         self.grad_weights_1 = np.sum(self.input.transpose(0, 2, 1) @ upstream_gradient, axis=0, keepdims=True)
@@ -320,8 +347,17 @@ class FeedForward:
         self.grad_biases_1 = np.sum(upstream_gradient, axis=(0,1), keepdims=True)
         self.grad_biases_1 = np.squeeze(self.grad_biases_1, axis=0)
 
+        # Clip grads if it explodes
+        grad_weights_1_norm = np.linalg.norm(self.grad_weights_1)
+        if grad_weights_1_norm > THRESHOLD: 
+            self.grad_weights_1 *= (THRESHOLD / grad_weights_1_norm)
 
         upstream_gradient = upstream_gradient @ self.weights_1.transpose()
+
+        # Clip grads if it explodes
+        upstream_gradient_norm = np.linalg.norm(upstream_gradient)
+        if upstream_gradient_norm > THRESHOLD: 
+            upstream_gradient *= (THRESHOLD / upstream_gradient_norm)
 
         return upstream_gradient
     
@@ -348,8 +384,18 @@ class LinearLayer:
         self.grad_weights = np.sum(np.matmul(self.input.transpose(0, 2, 1), upstream_gradient), axis=0) / batch_size
         self.grad_bias = np.sum(upstream_gradient, axis=(0, 1), keepdims=True) / batch_size
 
+        # Clip grads if it explodes
+        grad_weights_norm = np.linalg.norm(self.grad_weights)
+        if grad_weights_norm > THRESHOLD: 
+            self.grad_weights *= (THRESHOLD / grad_weights_norm)
+
         # Backpropagate the gradient
         grad_input = np.matmul(upstream_gradient, self.weights.T)
+
+        # Clip grads if it explodes
+        grad_input_norm = np.linalg.norm(grad_input)
+        if grad_input_norm > THRESHOLD: 
+            grad_input *= (THRESHOLD / grad_input_norm)
 
         return grad_input.copy()
 
