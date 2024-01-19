@@ -83,7 +83,7 @@ class MultiHeadAttention:
         self.num_heads = num_heads
         self.d_k = d_model // num_heads
         self.masked = masked
-        self.source_seq_length = source_seq_length
+        self.source_seq_length = source_seq_length # need for backprop
 
         # Xavier Initialization of Weight Matrices
         # Suited for Layers with Softmax Functions
@@ -140,27 +140,21 @@ class MultiHeadAttention:
         # Backward pass
 
         # Backward pass through the output weight matrix
-        # self.grad_W_o = self.attention_out.T @ upstream_gradient
-
         self.grad_W_o = np.einsum('bhk,bhl->kl', self.attention_out, upstream_gradient)
         grad_attention_scores = upstream_gradient @ self.W_o.T
 
         # Backward pass through the softmax function
         grad_softmax = self.attention_out * (1.0 - self.attention_out)
-        grad_attention_scores *= grad_softmax.sum(axis=-1, keepdims=True)
-
-        print(f'grad attention scores = {grad_attention_scores.shape}')
-
-        
+        grad_attention_scores *= grad_softmax.sum(axis=-1, keepdims=True)        
 
         # Backward pass through the attention mechanism
-        grad_query = grad_attention_scores @ np.transpose(self.W_q)
-        grad_key = grad_attention_scores @ np.transpose(self.W_k)
-        grad_value = grad_attention_scores @ np.transpose(self.W_v)
+        grad_query_prime = grad_attention_scores @ np.transpose(self.W_q)
+        grad_key_prime = grad_attention_scores[:,:self.source_seq_length,:] @ np.transpose(self.W_k)
+        grad_value_prime = grad_attention_scores[:,:self.source_seq_length,:] @ np.transpose(self.W_v)
 
-        print(f'grad query {grad_query.shape}')
-        print(f'grad key = {grad_key.shape}')
-        print(f'grad value = {grad_value.shape}')
+        print(f'grad query {grad_query_prime.shape}')
+        print(f'grad key = {grad_key_prime.shape}')
+        print(f'grad value = {grad_value_prime.shape}')
 
         print(f'query = {self.query.shape}')
         print(f'key = {self.key.shape}')
@@ -173,14 +167,11 @@ class MultiHeadAttention:
 
 
 
-        # # Backward pass through the weight matrices W_q, W_k, and W_v
-        # self.grad_W_q = np.transpose(self.query, (0, 2, 1)) @ grad_query
-        # self.grad_W_k = np.transpose(self.key, (0, 2, 1)) @ grad_key
-        # self.grad_W_v = np.transpose(self.value, (0, 2, 1)) @ grad_value
 
-        self.grad_W_q = self.query.transpose(0, 2, 1) @ grad_query
-        self.grad_W_k = self.key.transpose(0, 2, 1) @ grad_key
-        self.grad_W_v = self.value.transpose(0, 2, 1) @ grad_value
+        # # Backward pass through the weight matrices W_q, W_k, and W_v
+        self.grad_W_q = np.sum(self.query.transpose(0, 2, 1) @ grad_query_prime, axis = 0)
+        self.grad_W_k = np.sum(self.key.transpose(0, 2, 1) @ grad_key_prime, axis = 0)
+        self.grad_W_v = np.sum(self.value.transpose(0, 2, 1) @ grad_value_prime, axis = 0)
 
 
         print(f'grad W_q = {self.grad_W_q.shape}')
@@ -188,15 +179,14 @@ class MultiHeadAttention:
         print(f'grad W_v = {self.grad_W_v.shape}')
 
         # Compute gradients for the input queries, keys, and values
-        grad_query_input = grad_query @ self.W_q.T
-        grad_key_input = grad_key @ self.W_k.T
-        grad_value_input = grad_value @ self.W_v.T
+        grad_query_input = grad_query_prime @ self.W_q.T
+        grad_key_input = grad_key_prime @ self.W_k.T
+        grad_value_input = grad_value_prime @ self.W_v.T # not needed anymore
 
         print(f'grad_query_input = {grad_query_input.shape}')
+        print(f'grad key input = {grad_key_input.shape}')
 
-        print("DONE MULTIHEAD")
-
-        return grad_query_input, grad_key_input, grad_value_input
+        return grad_query_input, grad_key_input
 
 class LayerNorm:
 

@@ -97,14 +97,16 @@ class DataPreparation:
 
         # Build vocab for encoder input
         enc_vocab = self.create_vocab(train_set[:,0])
-        enc_seq_length = self.max_seq_length(train_set[:,0])
+        # enc_seq_length = self.max_seq_length(train_set[:,0])
+        enc_seq_length = MAX_SEQ_LENGTH
 
         enc_vocab_size = enc_vocab.size()
         source_seq = enc_vocab.seq_to_idx(train_set[:,0], enc_seq_length) # also adds padding of 0s to reach enc_seq_length
 
         # Build vocab for decoder input
         dec_vocab = self.create_vocab(train_set[:,1])
-        dec_seq_length = self.max_seq_length(train_set[:,1])
+        # dec_seq_length = self.max_seq_length(train_set[:,1])
+        dec_seq_length = MAX_SEQ_LENGTH
         
         dec_vocab_size = dec_vocab.size()
         target_seq = dec_vocab.seq_to_idx(train_set[:,1], dec_seq_length) # also adds padding of 0s to reach dec_seq_length
@@ -119,7 +121,7 @@ def main():
     source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data('english-german-both.pkl')
     
     model = Transformer(d_model = D_MODEL, num_heads = HEADS, d_ff = D_FF, 
-                        source_seq_length = enc_seq_length, target_seq_length = dec_seq_length, 
+                        source_seq_length = MAX_SEQ_LENGTH, target_seq_length = MAX_SEQ_LENGTH, 
                         source_vocab_size = enc_vocab_size, target_vocab_size = dec_vocab_size, 
                         learning_rate = LEARNING_RATE)
     

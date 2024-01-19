@@ -32,7 +32,7 @@ class Encoder:
         # Backward pass through the multi-head attention
         grad_multi_attention = self.multi_attention.backward(grad_norm1)
 
-        return grad_multi_attention
+        return grad_multi_attention[1] # pass grad key to embedding layer
 
     def update_parameters(self, learning_rate):
         # SGD update for each parameter in the encoder block

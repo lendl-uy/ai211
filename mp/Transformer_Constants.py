@@ -10,6 +10,7 @@ TRAIN_PERCENTAGE = 0.7
 
 # Input constants
 SENTENCE_LENGTH = 5 # 10,000 original value - number of sentences to include in training data
+MAX_SEQ_LENGTH = 10
 
 # Model hyperparameters
 LEARNING_RATE = 0.01
