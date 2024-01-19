@@ -231,6 +231,7 @@ class FeedForward:
         return np.where(x > 0, 1, 0)
 
     def __call__(self, input):
+        self.input = input
         # First linear transformation
         linear_output1 = input @ self.weights_1 + self.biases_1
 
@@ -246,18 +247,33 @@ class FeedForward:
         # Backward pass
 
         # Backward pass through the second linear layer
-        self.grad_weights_2 = np.sum(self.layer_2 @ upstream_gradient.transpose(0,2,1), axis=0, keepdims=True)
+        #self.grad_weights_2 = np.sum(self.layer_2 @ upstream_gradient.transpose(0,2,1), axis=0, keepdims=True)
+        self.grad_weights_2 = np.sum(self.layer_1.transpose(0, 2, 1) @ upstream_gradient, axis=0, keepdims=True)
+        self.grad_weights_2 = np.squeeze(self.grad_weights_2, axis=0)
+
         self.grad_biases_2 = np.sum(upstream_gradient, axis=(0,1), keepdims=True)
-        
+        self.grad_biases_2 = np.squeeze(self.grad_biases_2, axis=0)
+
+        # i = upstream_gradient.shape[0]
+        # j, k = self.weights_2.shape
+        # upstream_gradient = upstream_gradient @ np.broadcast_to(self.weights_2, (i,j,k)).transpose(0,2,1)
+        # upstream_gradient =  self.relu_derivative(self.layer_2).transpose(0,2,1) @ upstream_gradient
+
         # Backward pass through the ReLU activation
-        i = upstream_gradient.shape[0]
-        j, k = self.weights_2.shape
-        upstream_gradient = upstream_gradient @ np.broadcast_to(self.weights_2, (i,j,k)).transpose(0,2,1)
-        upstream_gradient =  self.relu_derivative(self.layer_2).transpose(0,2,1) @ upstream_gradient
+        relu_derivative = self.relu_derivative(self.layer_2)
+        upstream_gradient = relu_derivative * upstream_gradient
+        upstream_gradient = upstream_gradient @ self.weights_2.transpose()
+
 
         # Backward pass through the first linear layer
-        self.grad_weights_1 = np.sum(self.layer_1 @ upstream_gradient.transpose(0,2,1), axis=0, keepdims=True)
+        self.grad_weights_1 = np.sum(self.input.transpose(0, 2, 1) @ upstream_gradient, axis=0, keepdims=True)
+        self.grad_weights_1 = np.squeeze(self.grad_weights_1, axis=0)
+
         self.grad_biases_1 = np.sum(upstream_gradient, axis=(0,1), keepdims=True)
+        self.grad_biases_1 = np.squeeze(self.grad_biases_1, axis=0)
+
+
+        upstream_gradient = upstream_gradient @ self.weights_1.transpose()
 
         return upstream_gradient
     

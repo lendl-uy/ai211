@@ -21,16 +21,16 @@ class Decoder:
 
         # Backward pass through the layer normalization after the final linear layer
         grad_norm_3 = self.norm_3.backward(grad_final_linear_layer)
+        print(f"grad_norm 3 = {grad_norm_3.shape}")
 
         # Backward pass through the feedforward layer
         grad_ff = self.feed_forward.backward(grad_norm_3)
-
-        # Reshape grad_ff to match the shape before layer normalization
-        # grad_ff_reshaped = grad_ff.reshape(grad_ff.shape[0], self.num_heads, self.d_k)
+        print(f"grad ff = {grad_ff.shape}")
 
         # Backward pass through the layer normalization before the multi-head attention
         # grad_norm_2 = self.norm_2.backward(grad_ff_reshaped)
         grad_norm_2 = self.norm_2.backward(grad_ff)
+        print(f"grad norm 2 = {grad_norm_2.shape}")
 
         # Backward pass through the multi-head attention
         grad_multi_attention = self.multi_attention.backward(grad_norm_2)
