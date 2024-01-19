@@ -15,6 +15,7 @@ import numpy as np
 # Import the encoder and decoder implementations
 from Encoder import Encoder
 from Decoder import Decoder
+from Transformer_Constants import *
 from Operational_Blocks import InputEmbedding, PositionalEncoding, LinearLayer, softmax, softmax_derivative
 
 np.set_printoptions(precision=4)
@@ -89,7 +90,7 @@ class Transformer:
 
         # Final Linear Layer for Output
         output_logits = self.final_linear_layer(decoder_output)
-        
+
         # Apply Softmax to get probabilities
         target_mask = (target_seq != 0)
         output_probs = softmax(output_logits, mask = target_mask)
@@ -142,6 +143,7 @@ class Transformer:
 
         grad_source_embedded = self.source_embedding.backward(source_seq, grad_encoder_block)
         grad_target_embedded = self.target_embedding.backward(target_seq, grad_decoder_block[1])
+
 
         self.source_embedding.grad_vocab_embedding = grad_source_embedded
         self.target_embedding.grad_vocab_embedding = grad_target_embedded

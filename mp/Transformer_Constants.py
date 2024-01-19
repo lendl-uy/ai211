@@ -13,7 +13,7 @@ SENTENCE_LENGTH = 5 # 10,000 original value - number of sentences to include in 
 MAX_SEQ_LENGTH = 10
 
 # Model hyperparameters
-LEARNING_RATE = 0.01
+LEARNING_RATE = 0.1
 D_MODEL = 512 # 512 original value (should be divisible by # of heads and ideally even)
 D_FF = 12 # 2048 original value
 HEADS = 4
