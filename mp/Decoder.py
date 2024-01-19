@@ -77,20 +77,28 @@ class Decoder:
     def __call__(self, encoder_output, decoder_input):
         # Masked Multi-Head Self Attention
         masked_attention_output = self.masked_multi_attention(decoder_input, decoder_input, decoder_input)
-        print(f"dec masked_attention_output = {masked_attention_output.shape}")
+
         # Residual Connection and Normalization
         norm_1_output = self.norm_1(decoder_input + masked_attention_output)
-        print(f"dec norm_1_output = {norm_1_output.shape}")
+    
         # Multi-Head Encoder-Decoder Attention
         attention_output = self.multi_attention(norm_1_output, encoder_output, encoder_output)
-        print(f"dec attention_output = {attention_output.shape}")
+
         # Residual Connection and Normalization
         norm_2_output = self.norm_2(norm_1_output + attention_output)
-        print(f"dec norm_2_output = {norm_2_output.shape}")
+
         # Feed Forward
         ff_output = self.feed_forward(norm_2_output)
-        print(f"dec ff_output = {ff_output.shape}")
         # Residual Connection and Normalization
         decoder_output = self.norm_3(norm_2_output + ff_output)
-        print(f"dec decoder_output = {decoder_output.shape}")
+
+
+        # FOR DEBUGGING
+        # print(f"dec masked_attention_output = {masked_attention_output.shape}")
+        # print(f"dec norm_1_output = {norm_1_output.shape}")
+        # print(f"dec attention_output = {attention_output.shape}")
+        # print(f"dec norm_2_output = {norm_2_output.shape}")
+        # print(f"dec ff_output = {ff_output.shape}")
+        # print(f"dec decoder_output = {decoder_output.shape}")
+
         return decoder_output

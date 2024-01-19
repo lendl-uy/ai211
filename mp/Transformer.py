@@ -76,33 +76,45 @@ class Transformer:
         # Input Embedding
         source_embedded = self.source_embedding(source_seq)
         target_embedded = self.target_embedding(target_seq)
-        print(f"source_embedded = {source_embedded.shape}")
-        print(f"target_embedded = {target_embedded.shape}")
+
         # Positional Encoding
         source_with_position = self.source_positional_encoding(source_embedded)
         target_with_position = self.target_positional_encoding(target_embedded)
-        print(f"source_with_position = {source_with_position.shape}")
-        print(f"target_with_position = {target_with_position.shape}")
+
         # Encoder
         encoder_output = self.encoder_block(source_with_position)
-        print(f"encoder_output = {encoder_output.shape}")
-        print()
 
         # Decoder
         decoder_output = self.decoder_block(encoder_output, target_with_position)
-        print(f"decoder_output = {decoder_output.shape}")
+
         # Final Linear Layer for Output
         output_logits = self.final_linear_layer(decoder_output)
-        print(f"output_logits = {output_logits.shape}")
+        
         # Apply Softmax to get probabilities
         target_mask = (target_seq != 0)
         output_probs = softmax(output_logits, mask = target_mask)
-        print(f"output_probs = {output_probs.shape}")
-        print()
+        
         # One-hot encode the target sequence for the cross-entropy loss
         target_probs = np.eye(self.target_vocab_size)[target_seq]
 
         self._loss = self.cross_entropy_loss(output_probs, target_probs, target_mask)
+
+        # FOR DEBUGGING:
+        # print(f"source_embedded = {source_embedded.shape}")
+        # print(f"target_embedded = {target_embedded.shape}")
+
+        # print(f"source_with_position = {source_with_position.shape}")
+        # print(f"target_with_position = {target_with_position.shape}")
+
+
+        # print(f"encoder_output = {encoder_output.shape}")
+        # print()
+
+        # print(f"decoder_output = {decoder_output.shape}")
+        # print(f"output_logits = {output_logits.shape}")
+
+        # print(f"output_probs = {output_probs.shape}")
+        # print()
 
         return output_probs
 

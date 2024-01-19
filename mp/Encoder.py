@@ -57,14 +57,20 @@ class Encoder:
     def __call__(self, input):
         # Multi-Head Self Attention
         attention_output = self.multi_attention(input, input, input)
-        print(f"enc attention_output = {attention_output.shape}")
+
         # Residual Connection and Normalization
         norm1_output = self.norm_1(input + attention_output)
-        print(f"enc norm1_output = {norm1_output.shape}")
+
         # Feed Forward
         ff_output = self.feed_forward(norm1_output)
-        print(f"enc ff_output = {ff_output.shape}")
+        
         # Residual Connection and Normalization
         encoder_output = self.norm_2(norm1_output + ff_output)
-        print(f"enc encoder_output = {encoder_output.shape}")
+
+        # FOR DEBUGGING:
+        # print(f"enc attention_output = {attention_output.shape}")
+        # print(f"enc norm1_output = {norm1_output.shape}")
+        # print(f"enc ff_output = {ff_output.shape}")
+        # print(f"enc encoder_output = {encoder_output.shape}")
+
         return encoder_output

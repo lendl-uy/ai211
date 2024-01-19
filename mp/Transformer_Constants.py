@@ -4,7 +4,7 @@
 DATASET_PATH = "english-german-both.pkl"
 
 # Training constants
-EPOCHS = 2
+EPOCHS = 6
 BATCH_SIZE = 2 # 32 original value
 TRAIN_PERCENTAGE = 0.7
 
@@ -14,6 +14,6 @@ MAX_SEQ_LENGTH = 10
 
 # Model hyperparameters
 LEARNING_RATE = 0.01
-D_MODEL = 8 # 512 original value (should be divisible by # of heads and ideally even)
+D_MODEL = 512 # 512 original value (should be divisible by # of heads and ideally even)
 D_FF = 12 # 2048 original value
 HEADS = 4
