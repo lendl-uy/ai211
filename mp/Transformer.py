@@ -126,13 +126,16 @@ class Transformer:
         # Outputs two grads: one for encoder block and the other for the target embedding
         grad_decoder_block = self.decoder_block.backward(grad_final_linear_layer)
 
-        # grad_encoder_block = self.encoder_block.backward(grad_decoder_block[0])
+        grad_encoder_block = self.encoder_block.backward(grad_decoder_block[0])
+        print(f"grad_encoder_block = {grad_encoder_block.shape}")
+
 
         # grad_source_embedded = self.source_embedding.backward(source_seq, grad_encoder_block)
-        # grad_target_embedded = self.target_embedding.backward(target_seq, grad_decoder_block[1])
+        grad_target_embedded = self.target_embedding.backward(target_seq, grad_decoder_block[1])
+        print(f'grad_target_embed = {grad_target_embedded.shape}')
 
         # self.source_embedding.grad_vocab_embedding = grad_source_embedded
-        # self.target_embedding.grad_vocab_embedding = grad_target_embedded
+        self.target_embedding.grad_vocab_embedding = grad_target_embedded
 
         # self.update_parameters(self.learning_rate)
 

@@ -23,11 +23,8 @@ class Encoder:
         # Backward pass through the feedforward layer
         grad_ff = self.feed_forward.backward(grad_norm_2)
 
-        # Reshape grad_ff to match the shape before layer normalization
-        grad_ff_reshaped = grad_ff.reshape(grad_ff.shape[0], self.num_heads, self.d_k)
-
         # Backward pass through the layer normalization before the multi-head attention
-        grad_norm1 = self.norm_1.backward(grad_ff_reshaped)
+        grad_norm1 = self.norm_1.backward(grad_ff)
 
         # Backward pass through the multi-head attention
         grad_multi_attention = self.multi_attention.backward(grad_norm1)

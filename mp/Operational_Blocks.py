@@ -152,31 +152,12 @@ class MultiHeadAttention:
         grad_key_prime = grad_attention_scores[:,:self.source_seq_length,:] @ np.transpose(self.W_k)
         grad_value_prime = grad_attention_scores[:,:self.source_seq_length,:] @ np.transpose(self.W_v)
 
-        print(f'grad query {grad_query_prime.shape}')
-        print(f'grad key = {grad_key_prime.shape}')
-        print(f'grad value = {grad_value_prime.shape}')
-
-        print(f'query = {self.query.shape}')
-        print(f'key = {self.key.shape}')
-        print(f'value = {self.value.shape}')
-
-
-        print(f'W_q = {self.W_q.shape}')
-        print(f'W_k = {self.W_k.shape}')
-        print(f'W_v = {self.W_v.shape}')
-
-
-
 
         # # Backward pass through the weight matrices W_q, W_k, and W_v
         self.grad_W_q = np.sum(self.query.transpose(0, 2, 1) @ grad_query_prime, axis = 0)
         self.grad_W_k = np.sum(self.key.transpose(0, 2, 1) @ grad_key_prime, axis = 0)
         self.grad_W_v = np.sum(self.value.transpose(0, 2, 1) @ grad_value_prime, axis = 0)
 
-
-        print(f'grad W_q = {self.grad_W_q.shape}')
-        print(f'grad_W_k = {self.grad_W_k.shape}')
-        print(f'grad W_v = {self.grad_W_v.shape}')
 
         # Compute gradients for the input queries, keys, and values
         grad_query_input = grad_query_prime @ self.W_q.T
