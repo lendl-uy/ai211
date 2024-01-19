@@ -187,9 +187,16 @@ class LayerNorm:
     def backward(self, upstream_gradient):
         # Backward pass
 
+        print(self.gamma.shape)
+        print(self.beta.shape)
+
         # Compute gradients for gamma and beta
-        self.grad_gamma = np.sum(upstream_gradient * self.normalized_input, axis=-1, keepdims=True)
-        self.grad_beta = np.sum(upstream_gradient, axis=-1, keepdims=True)
+        self.grad_gamma = np.sum(upstream_gradient * self.normalized_input, axis=(0,1), keepdims=True)
+        self.grad_beta = np.sum(upstream_gradient, axis=(0,1), keepdims=True)
+
+        # Squeeze the extra dimensions to get vectors
+        self.grad_gamma = self.grad_gamma.squeeze()
+        self.grad_beta = self.grad_beta.squeeze()
 
         # Compute gradient of the loss with respect to the normalized input
         grad_normalized_input = upstream_gradient * self.gamma
@@ -204,6 +211,7 @@ class LayerNorm:
         # Compute gradient of the loss with respect to the input
         grad_input = grad_normalized_input / (std + self.eps) + grad_std * 2.0 * diff_input_mean / self.input.shape[-1] + grad_mean / self.input.shape[-1]
 
+        # print(f'grad input = {grad_input.shape}') #batch size, max seq, d_model
         return grad_input
     
 class FeedForward:
