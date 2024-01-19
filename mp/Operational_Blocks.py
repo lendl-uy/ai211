@@ -164,6 +164,11 @@ class MultiHeadAttention:
         grad_key_input = grad_key_prime @ self.W_k.T
         grad_value_input = grad_value_prime @ self.W_v.T # not needed anymore
 
+        print(f'grad query input norm = {np.linalg.norm(grad_query_input)}')
+
+        # Perform grad clipping if gradients explode
+
+
         return grad_query_input, grad_key_input
 
 class LayerNorm:
