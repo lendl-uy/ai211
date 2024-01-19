@@ -164,9 +164,6 @@ class MultiHeadAttention:
         grad_key_input = grad_key_prime @ self.W_k.T
         grad_value_input = grad_value_prime @ self.W_v.T # not needed anymore
 
-        print(f'grad_query_input = {grad_query_input.shape}')
-        print(f'grad key input = {grad_key_input.shape}')
-
         return grad_query_input, grad_key_input
 
 class LayerNorm:
