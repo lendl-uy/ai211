@@ -1,5 +1,4 @@
-hw9/Gradient_Descent_Old.py
 .DS_Store
-hw8/__pycache__/NeuralNetwork.cpython-311.pyc
-mp/__pycache__/Transformer.cpython-311.pyc
-mp/__pycache__/Transformer_Train.cpython-311.pyc
+hw9/Gradient_Descent_Old.py
+hw8/__pycache__/
+mp/__pycache__/
