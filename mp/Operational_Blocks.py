@@ -99,7 +99,7 @@ class MultiHeadAttention:
         self.grad_W_v = np.zeros((d_model, d_model))
         self.grad_W_o = np.zeros((d_model, d_model))
 
-    def attention(self, query, key, value, masked = False):
+    def attention(self, query, key, value, masked):
         d_k = query.shape[-1]
 
         attention_scores = (query @ np.transpose(key, (0, 1, 3, 2))) / np.sqrt(d_k)
@@ -150,12 +150,13 @@ class MultiHeadAttention:
         grad_attention_scores *= grad_softmax.sum(axis=-1, keepdims=True)
 
         print(f'grad attention scores = {grad_attention_scores.shape}')
+
         
 
         # Backward pass through the attention mechanism
         grad_query = grad_attention_scores @ np.transpose(self.W_q)
-        grad_key = grad_attention_scores @ np.transpose(self.W_k[:, :self.source_seq_length, :])
-        grad_value = grad_attention_scores @ np.transpose(self.W_v[:, :self.source_seq_length, :])
+        grad_key = grad_attention_scores @ np.transpose(self.W_k)
+        grad_value = grad_attention_scores @ np.transpose(self.W_v)
 
         print(f'grad query {grad_query.shape}')
         print(f'grad key = {grad_key.shape}')

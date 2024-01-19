@@ -41,7 +41,7 @@ class Transformer:
         self.target_positional_encoding = PositionalEncoding(d_model, target_seq_length)
 
         # Encoder Block
-        self.encoder_block = Encoder(d_model, num_heads, d_ff)
+        self.encoder_block = Encoder(d_model, num_heads, d_ff, source_seq_length)
 
         # Decoder Block
         self.decoder_block = Decoder(d_model, num_heads, d_ff, source_seq_length)
