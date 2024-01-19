@@ -131,7 +131,7 @@ class Transformer:
         # Backpropagate through output blocks
         # Cross entropy loss, softmax, and linear layer
         grad_output_logits = self.cross_entropy_derivative(output_probs, target_labels) / batch_size
-        grad_softmax = softmax_derivative(output_probs)
+        grad_softmax = softmax_derivative(grad_output_logits)
         grad_final_linear_layer = self.final_linear_layer.backward(grad_softmax)
 
         # Backpropagate through the encoder and the decoder

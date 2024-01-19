@@ -92,7 +92,6 @@ class Decoder:
         # Residual Connection and Normalization
         decoder_output = self.norm_3(norm_2_output + ff_output)
 
-
         # FOR DEBUGGING
         # print(f"dec masked_attention_output = {masked_attention_output.shape}")
         # print(f"dec norm_1_output = {norm_1_output.shape}")
