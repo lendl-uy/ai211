@@ -13,6 +13,6 @@ SENTENCE_LENGTH = 5 # 10,000 original value - number of sentences to include in 
 
 # Model hyperparameters
 LEARNING_RATE = 0.01
-D_MODEL = 6 # 512 original value
+D_MODEL = 8 # 512 original value (should be divisible by # of heads and ideally even)
 D_FF = 12 # 2048 original value
-HEADS = 3
+HEADS = 4

@@ -3,15 +3,16 @@
 from Operational_Blocks import MultiHeadAttention, LayerNorm, FeedForward
 
 class Decoder:
-    def __init__(self, d_model, num_heads, d_ff):
+    def __init__(self, d_model, num_heads, d_ff, source_seq_length):
         self.d_model = d_model
         self.num_heads = num_heads
         self.d_ff = d_ff
         self.d_k = d_model // num_heads
+        self.source_seq_length = source_seq_length
 
-        self.masked_multi_attention = MultiHeadAttention(d_model, num_heads, masked=True)
+        self.masked_multi_attention = MultiHeadAttention(source_seq_length, d_model, num_heads, masked=True)
         self.norm_1 = LayerNorm(d_model)
-        self.multi_attention = MultiHeadAttention(d_model, num_heads)
+        self.multi_attention = MultiHeadAttention(source_seq_length, d_model, num_heads)
         self.norm_2 = LayerNorm(d_model)
         self.feed_forward = FeedForward(d_model, d_ff)
         self.norm_3 = LayerNorm(d_model)

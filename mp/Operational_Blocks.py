@@ -78,11 +78,12 @@ class PositionalEncoding:
 
 class MultiHeadAttention:
 
-    def __init__(self, d_model, num_heads, masked = False): # d_model should be divisible by num_heads
+    def __init__(self, source_seq_length, d_model, num_heads, masked = False): # d_model should be divisible by num_heads
         self.d_model = d_model
         self.num_heads = num_heads
         self.d_k = d_model // num_heads
         self.masked = masked
+        self.source_seq_length = source_seq_length
 
         # Xavier Initialization of Weight Matrices
         # Suited for Layers with Softmax Functions
@@ -139,27 +140,60 @@ class MultiHeadAttention:
         # Backward pass
 
         # Backward pass through the output weight matrix
-        self.grad_W_o = self.attention_out.T @ upstream_gradient
+        # self.grad_W_o = self.attention_out.T @ upstream_gradient
+
+        self.grad_W_o = np.einsum('bhk,bhl->kl', self.attention_out, upstream_gradient)
         grad_attention_scores = upstream_gradient @ self.W_o.T
 
         # Backward pass through the softmax function
         grad_softmax = self.attention_out * (1.0 - self.attention_out)
-        grad_attention_scores *= grad_softmax
+        grad_attention_scores *= grad_softmax.sum(axis=-1, keepdims=True)
+
+        print(f'grad attention scores = {grad_attention_scores.shape}')
+        
 
         # Backward pass through the attention mechanism
-        grad_query = grad_attention_scores @ np.transpose(self.W_k, (0, 1, 3, 2))
-        grad_key = grad_attention_scores @ np.transpose(self.W_q, (0, 1, 3, 2))
-        grad_value = grad_attention_scores @ np.transpose(self.W_v, (0, 1, 3, 2))
+        grad_query = grad_attention_scores @ np.transpose(self.W_q)
+        grad_key = grad_attention_scores @ np.transpose(self.W_k[:, :self.source_seq_length, :])
+        grad_value = grad_attention_scores @ np.transpose(self.W_v[:, :self.source_seq_length, :])
 
-        # Backward pass through the weight matrices W_q, W_k, and W_v
-        self.grad_W_q = self.query.T @ grad_query
-        self.grad_W_k = self.key.T @ grad_key
-        self.grad_W_v = self.value.T @ grad_value
+        print(f'grad query {grad_query.shape}')
+        print(f'grad key = {grad_key.shape}')
+        print(f'grad value = {grad_value.shape}')
+
+        print(f'query = {self.query.shape}')
+        print(f'key = {self.key.shape}')
+        print(f'value = {self.value.shape}')
+
+
+        print(f'W_q = {self.W_q.shape}')
+        print(f'W_k = {self.W_k.shape}')
+        print(f'W_v = {self.W_v.shape}')
+
+
+
+        # # Backward pass through the weight matrices W_q, W_k, and W_v
+        # self.grad_W_q = np.transpose(self.query, (0, 2, 1)) @ grad_query
+        # self.grad_W_k = np.transpose(self.key, (0, 2, 1)) @ grad_key
+        # self.grad_W_v = np.transpose(self.value, (0, 2, 1)) @ grad_value
+
+        self.grad_W_q = self.query.transpose(0, 2, 1) @ grad_query
+        self.grad_W_k = self.key.transpose(0, 2, 1) @ grad_key
+        self.grad_W_v = self.value.transpose(0, 2, 1) @ grad_value
+
+
+        print(f'grad W_q = {self.grad_W_q.shape}')
+        print(f'grad_W_k = {self.grad_W_k.shape}')
+        print(f'grad W_v = {self.grad_W_v.shape}')
 
         # Compute gradients for the input queries, keys, and values
         grad_query_input = grad_query @ self.W_q.T
         grad_key_input = grad_key @ self.W_k.T
         grad_value_input = grad_value @ self.W_v.T
+
+        print(f'grad_query_input = {grad_query_input.shape}')
+
+        print("DONE MULTIHEAD")
 
         return grad_query_input, grad_key_input, grad_value_input
 

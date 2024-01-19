@@ -44,7 +44,7 @@ class Transformer:
         self.encoder_block = Encoder(d_model, num_heads, d_ff)
 
         # Decoder Block
-        self.decoder_block = Decoder(d_model, num_heads, d_ff)
+        self.decoder_block = Decoder(d_model, num_heads, d_ff, source_seq_length)
 
         # Final Linear Layer for Output
         self.final_linear_layer = LinearLayer(d_model, target_vocab_size)
