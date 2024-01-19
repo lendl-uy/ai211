@@ -187,9 +187,6 @@ class LayerNorm:
     def backward(self, upstream_gradient):
         # Backward pass
 
-        print(self.gamma.shape)
-        print(self.beta.shape)
-
         # Compute gradients for gamma and beta
         self.grad_gamma = np.sum(upstream_gradient * self.normalized_input, axis=(0,1), keepdims=True)
         self.grad_beta = np.sum(upstream_gradient, axis=(0,1), keepdims=True)
