@@ -7,6 +7,8 @@
 # [6] LinearLayer
 
 import numpy as np
+from Transformer_Constants import *
+
 
 def softmax(x, mask=None):
     if mask is not None:
@@ -152,6 +154,21 @@ class MultiHeadAttention:
         grad_key_prime = grad_attention_scores[:,:self.source_seq_length,:] @ np.transpose(self.W_k)
         grad_value_prime = grad_attention_scores[:,:self.source_seq_length,:] @ np.transpose(self.W_v)
 
+        
+        # Clip grads if it explodes
+        grad_query_prime_norm = np.linalg.norm(grad_query_prime)
+        if grad_query_prime_norm > THRESHOLD: 
+            grad_query_prime *= (THRESHOLD / grad_query_prime_norm)
+
+        grad_key_prime_norm = np.linalg.norm(grad_key_prime)
+        if grad_key_prime_norm > THRESHOLD: 
+            grad_key_prime *= (THRESHOLD / grad_key_prime_norm)
+
+        grad_value_prime_norm = np.linalg.norm(grad_value_prime)
+        if grad_value_prime_norm > THRESHOLD: 
+            grad_value_prime *= (THRESHOLD / grad_value_prime_norm)
+
+
 
         # # Backward pass through the weight matrices W_q, W_k, and W_v
         self.grad_W_q = np.sum(self.query.transpose(0, 2, 1) @ grad_query_prime, axis = 0)
@@ -159,15 +176,33 @@ class MultiHeadAttention:
         self.grad_W_v = np.sum(self.value.transpose(0, 2, 1) @ grad_value_prime, axis = 0)
 
 
+        # Clip grads if it explodes
+        grad_W_q_norm = np.linalg.norm(self.grad_W_q)
+        if grad_W_q_norm > THRESHOLD: 
+            self.grad_W_q *= (THRESHOLD / grad_W_q_norm)
+
+        grad_W_k_norm = np.linalg.norm(self.grad_W_k)
+        if grad_W_k_norm > THRESHOLD: 
+            self.grad_W_k *= (THRESHOLD / grad_W_k_norm)
+
+        grad_W_v_norm = np.linalg.norm(self.grad_W_v)
+        if grad_W_v_norm > THRESHOLD: 
+            self.grad_W_v *= (THRESHOLD / grad_W_v_norm)
+
+
         # Compute gradients for the input queries, keys, and values
         grad_query_input = grad_query_prime @ self.W_q.T
         grad_key_input = grad_key_prime @ self.W_k.T
         grad_value_input = grad_value_prime @ self.W_v.T # not needed anymore
 
-        print(f'grad query input norm = {np.linalg.norm(grad_query_input)}')
+        # Clip grads if it explodes
+        grad_query_input_norm = np.linalg.norm(grad_query_input)
+        if grad_query_input_norm > THRESHOLD: 
+            grad_query_input *= (THRESHOLD / grad_query_input_norm)
 
-        # Perform grad clipping if gradients explode
-
+        grad_key_input_norm = np.linalg.norm(grad_key_input)
+        if grad_key_input_norm > THRESHOLD: 
+            grad_key_input *= (THRESHOLD / grad_key_input_norm)
 
         return grad_query_input, grad_key_input
 
