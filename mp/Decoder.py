@@ -26,10 +26,11 @@ class Decoder:
         grad_ff = self.feed_forward.backward(grad_norm_3)
 
         # Reshape grad_ff to match the shape before layer normalization
-        grad_ff_reshaped = grad_ff.reshape(grad_ff.shape[0], self.num_heads, self.d_k)
+        # grad_ff_reshaped = grad_ff.reshape(grad_ff.shape[0], self.num_heads, self.d_k)
 
         # Backward pass through the layer normalization before the multi-head attention
-        grad_norm_2 = self.norm_2.backward(grad_ff_reshaped)
+        # grad_norm_2 = self.norm_2.backward(grad_ff_reshaped)
+        grad_norm_2 = self.norm_2.backward(grad_ff)
 
         # Backward pass through the multi-head attention
         grad_multi_attention = self.multi_attention.backward(grad_norm_2)
@@ -66,10 +67,10 @@ class Decoder:
         self.norm_2.beta -= learning_rate * self.norm_2.grad_beta
 
         # Feed Forward
-        self.feed_forward.linear1 -= learning_rate * self.feed_forward.grad_linear1
-        self.feed_forward.linear2 -= learning_rate * self.feed_forward.grad_linear2
-        self.feed_forward.bias1 -= learning_rate * self.feed_forward.grad_bias1
-        self.feed_forward.bias2 -= learning_rate * self.feed_forward.grad_bias2
+        self.feed_forward.weights_1 -= learning_rate * self.feed_forward.grad_weights_1
+        self.feed_forward.weights_2 -= learning_rate * self.feed_forward.grad_weights_2
+        self.feed_forward.biases_1 -= learning_rate * self.feed_forward.grad_biases_1
+        self.feed_forward.biases_2 -= learning_rate * self.feed_forward.grad_biases_2
 
         # Layer Norm 3
         self.norm_3.gamma -= learning_rate * self.norm_3.grad_gamma
@@ -78,20 +79,20 @@ class Decoder:
     def __call__(self, encoder_output, decoder_input):
         # Masked Multi-Head Self Attention
         masked_attention_output = self.masked_multi_attention(decoder_input, decoder_input, decoder_input)
-
+        print(f"dec masked_attention_output = {masked_attention_output.shape}")
         # Residual Connection and Normalization
         norm_1_output = self.norm_1(decoder_input + masked_attention_output)
-
+        print(f"dec norm_1_output = {norm_1_output.shape}")
         # Multi-Head Encoder-Decoder Attention
         attention_output = self.multi_attention(norm_1_output, encoder_output, encoder_output)
-
+        print(f"dec attention_output = {attention_output.shape}")
         # Residual Connection and Normalization
         norm_2_output = self.norm_2(norm_1_output + attention_output)
-
+        print(f"dec norm_2_output = {norm_2_output.shape}")
         # Feed Forward
         ff_output = self.feed_forward(norm_2_output)
-
+        print(f"dec ff_output = {ff_output.shape}")
         # Residual Connection and Normalization
         decoder_output = self.norm_3(norm_2_output + ff_output)
-
+        print(f"dec decoder_output = {decoder_output.shape}")
         return decoder_output

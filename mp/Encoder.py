@@ -48,10 +48,10 @@ class Encoder:
         self.norm_1.beta -= learning_rate * self.norm_1.grad_beta
 
         # Feed Forward
-        self.feed_forward.linear1 -= learning_rate * self.feed_forward.grad_linear1
-        self.feed_forward.linear2 -= learning_rate * self.feed_forward.grad_linear2
-        self.feed_forward.bias1 -= learning_rate * self.feed_forward.grad_bias1
-        self.feed_forward.bias2 -= learning_rate * self.feed_forward.grad_bias2
+        self.feed_forward.weights_1 -= learning_rate * self.feed_forward.grad_weights_1
+        self.feed_forward.weights_2 -= learning_rate * self.feed_forward.grad_weights_2
+        self.feed_forward.biases_1 -= learning_rate * self.feed_forward.grad_biases_1
+        self.feed_forward.biases_2 -= learning_rate * self.feed_forward.grad_biases_2
 
         # Layer Norm 2
         self.norm_2.gamma -= learning_rate * self.norm_2.grad_gamma
@@ -60,14 +60,14 @@ class Encoder:
     def __call__(self, input):
         # Multi-Head Self Attention
         attention_output = self.multi_attention(input, input, input)
-
+        print(f"enc attention_output = {attention_output.shape}")
         # Residual Connection and Normalization
         norm1_output = self.norm_1(input + attention_output)
-
+        print(f"enc norm1_output = {norm1_output.shape}")
         # Feed Forward
         ff_output = self.feed_forward(norm1_output)
-
+        print(f"enc ff_output = {ff_output.shape}")
         # Residual Connection and Normalization
         encoder_output = self.norm_2(norm1_output + ff_output)
-
+        print(f"enc encoder_output = {encoder_output.shape}")
         return encoder_output

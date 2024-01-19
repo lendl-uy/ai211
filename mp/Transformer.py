@@ -15,7 +15,7 @@ import numpy as np
 # Import the encoder and decoder implementations
 from Encoder import Encoder
 from Decoder import Decoder
-from Operational_Blocks import InputEmbedding, PositionalEncoding, LinearLayer, softmax
+from Operational_Blocks import InputEmbedding, PositionalEncoding, LinearLayer, softmax, softmax_derivative
 
 np.set_printoptions(precision=4)
 
@@ -76,24 +76,26 @@ class Transformer:
         # Input Embedding
         source_embedded = self.source_embedding(source_seq)
         target_embedded = self.target_embedding(target_seq)
-
+        print(f"source_embedded = {source_embedded.shape}")
+        print(f"target_embedded = {target_embedded.shape}")
         # Positional Encoding
         source_with_position = self.source_positional_encoding(source_embedded)
         target_with_position = self.target_positional_encoding(target_embedded)
-
+        print(f"source_with_position = {source_with_position.shape}")
+        print(f"target_with_position = {target_with_position.shape}")
         # Encoder
         encoder_output = self.encoder_block(source_with_position)
-
+        print(f"encoder_output = {encoder_output.shape}")
         # Decoder
         decoder_output = self.decoder_block(encoder_output, target_with_position)
-
+        print(f"decoder_output = {decoder_output.shape}")
         # Final Linear Layer for Output
         output_logits = self.final_linear_layer(decoder_output)
-
+        print(f"output_logits = {output_logits.shape}")
         # Apply Softmax to get probabilities
         target_mask = (target_seq != 0)
         output_probs = softmax(output_logits, mask = target_mask)
-
+        print(f"output_probs = {output_probs.shape}")
         # One-hot encode the target sequence for the cross-entropy loss
         target_probs = np.eye(self.target_vocab_size)[target_seq]
 
@@ -107,13 +109,19 @@ class Transformer:
         # return loss
     
     def backward(self, source_seq, target_seq, output_probs, target_labels):
-        # Compute gradient of the loss with respect to the final logits and backprop through rest of the architecture
+        # Compute gradient of the loss with respect to the final logits 
+        # then backpropagation through the rest of the architecture
         batch_size = len(source_seq)
+        
+        # Backpropagate through output blocks
+        # Cross entropy loss, softmax, and linear layer
         grad_output_logits = self.cross_entropy_derivative(output_probs, target_labels) / batch_size
+        grad_softmax = softmax_derivative(output_probs)
+        grad_final_linear_layer = self.final_linear_layer.backward(grad_softmax)
 
-        grad_final_linear_layer = self.final_linear_layer.backward(grad_output_logits)
-
-        # grad_decoder_block = self.decoder_block.backward(grad_final_linear_layer) # will output two grads: first one for encoder block and second one for target embedding
+        # Backpropagate through the encoder and the decoder
+        # Outputs two grads: one for encoder block and the other for the target embedding
+        grad_decoder_block = self.decoder_block.backward(grad_final_linear_layer)
 
         # grad_encoder_block = self.encoder_block.backward(grad_decoder_block[0])
 

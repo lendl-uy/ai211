@@ -16,7 +16,9 @@ def softmax(x, mask=None):
 
 def softmax_derivative(x):
     s = softmax(x)
-    return s * (np.eye(s.shape[1]) - s[:, np.newaxis, :])
+    i, j, k = s.shape
+    identity_matrix_3d = np.broadcast_to(np.eye(j, k), (i, j, k))
+    return s * (identity_matrix_3d - s)
 
 class InputEmbedding:
 
@@ -41,10 +43,10 @@ class InputEmbedding:
         input_indices = np.array(input_indices)
         return self.embedding(input_indices) * np.sqrt(self.d_model)
     
-    def backward(self, input_indices, grad_output):
+    def backward(self, input_indices, upstream_gradient):
         # Compute gradients for the vocab_embedding
         self.grad_vocab_embedding = np.zeros_like(self.vocab_embedding)
-        np.add.at(self.grad_vocab_embedding, input_indices, grad_output)
+        np.add.at(self.grad_vocab_embedding, input_indices, upstream_gradient)
 
         return self.grad_vocab_embedding
     
@@ -133,12 +135,12 @@ class MultiHeadAttention:
 
         return self.attention_out @ self.W_o
 
-    def backward(self, grad_output):
+    def backward(self, upstream_gradient):
         # Backward pass
 
         # Backward pass through the output weight matrix
-        self.grad_W_o = self.attention_out.T @ grad_output
-        grad_attention_scores = grad_output @ self.W_o.T
+        self.grad_W_o = self.attention_out.T @ upstream_gradient
+        grad_attention_scores = upstream_gradient @ self.W_o.T
 
         # Backward pass through the softmax function
         grad_softmax = self.attention_out * (1.0 - self.attention_out)
@@ -179,15 +181,15 @@ class LayerNorm:
         self.normalized_input = self.gamma * (input - mean) / (std + self.eps) + self.beta
         return self.normalized_input
     
-    def backward(self, grad_output):
+    def backward(self, upstream_gradient):
         # Backward pass
 
         # Compute gradients for gamma and beta
-        self.grad_gamma = np.sum(grad_output * self.normalized_input, axis=-1, keepdims=True)
-        self.grad_beta = np.sum(grad_output, axis=-1, keepdims=True)
+        self.grad_gamma = np.sum(upstream_gradient * self.normalized_input, axis=-1, keepdims=True)
+        self.grad_beta = np.sum(upstream_gradient, axis=-1, keepdims=True)
 
         # Compute gradient of the loss with respect to the normalized input
-        grad_normalized_input = grad_output * self.gamma
+        grad_normalized_input = upstream_gradient * self.gamma
 
         # Compute gradients for mean and std
         mean = np.mean(self.input, axis=-1, keepdims=True)
@@ -203,49 +205,61 @@ class LayerNorm:
     
 class FeedForward:
     def __init__(self, d_model, d_ff):
+        
+        # Initialization of layer values
+        self.layer_1 = None
+        self.layer_2 = None
+        
         # Weight matrix and bias for the 1st and the 2nd linear layer
         # He Intialization of Weight Matrices
         # Suitable for layers with ReLU
-        self.linear1 = np.random.randn(d_model, d_ff) * np.sqrt(2/(d_model+d_ff))
-        self.bias1 = np.zeros((1, d_ff))
-        self.linear2 = np.random.randn(d_ff, d_model)  * np.sqrt(2/(d_model+d_ff))
-        self.bias2 = np.zeros((1, d_model))
+        self.weights_1 = np.random.randn(d_model, d_ff) * np.sqrt(2/(d_model+d_ff))
+        self.biases_1 = np.zeros((1, d_ff))
+        self.weights_2 = np.random.randn(d_ff, d_model)  * np.sqrt(2/(d_model+d_ff))
+        self.biases_2 = np.zeros((1, d_model))
 
         # Create vars to store the gradients
-        self.grad_linear1 = np.zeros((d_model,d_ff))
-        self.grad_bias1 = np.zeros((1, d_ff))
-        self.grad_linear2 = np.zeros((d_ff, d_model))
-        self.grad_bias2 = np.zeros((1, d_model))
+        self.grad_weights_1 = np.zeros((d_model,d_ff))
+        self.grad_biases_1 = np.zeros((1, d_ff))
+        self.grad_weights_2 = np.zeros((d_ff, d_model))
+        self.grad_biases_2 = np.zeros((1, d_model))
+        
+    def relu(self, x):
+        return np.maximum(0, x)
+        
+    def relu_derivative(self, x):
+        return np.where(x > 0, 1, 0)
 
     def __call__(self, input):
         # First linear transformation
-        linear_output1 = input @ self.linear1 + self.bias1
+        linear_output1 = input @ self.weights_1 + self.biases_1
 
         # ReLU activation
-        self.relu_output = np.maximum(linear_output1, 0)
-
+        self.layer_1 = self.relu(linear_output1)
+        
         # Second linear transformation
-        linear_output2 = self.relu_output @ self.linear2 + self.bias2
+        self.layer_2 = self.layer_1 @ self.weights_2 + self.biases_2
 
-        return linear_output2
+        return self.layer_2.copy()
     
-    def backward(self, input, grad_output):
+    def backward(self, upstream_gradient):
         # Backward pass
 
         # Backward pass through the second linear layer
-        self.grad_linear2 = self.relu_output.T @ grad_output
-        self.grad_bias2 = np.sum(grad_output, axis=0, keepdims=True)
-        grad_relu = grad_output.dot(self.linear2.T)
-
+        self.grad_weights_2 = np.sum(self.layer_2 @ upstream_gradient.transpose(0,2,1), axis=0, keepdims=True)
+        self.grad_biases_2 = np.sum(upstream_gradient, axis=(0,1), keepdims=True)
+        
         # Backward pass through the ReLU activation
-        grad_relu_input = grad_relu * (self.relu_output > 0)
+        i = upstream_gradient.shape[0]
+        j, k = self.weights_2.shape
+        upstream_gradient = upstream_gradient @ np.broadcast_to(self.weights_2, (i,j,k)).transpose(0,2,1)
+        upstream_gradient =  self.relu_derivative(self.layer_2).transpose(0,2,1) @ upstream_gradient
 
         # Backward pass through the first linear layer
-        self.grad_linear1 = input.T @ grad_relu_input
-        self.grad_bias1 = np.sum(grad_relu_input, axis=0, keepdims=True)
-        grad_input = grad_relu_input.dot(self.linear1.T)
+        self.grad_weights_1 = np.sum(self.layer_1 @ upstream_gradient.transpose(0,2,1), axis=0, keepdims=True)
+        self.grad_biases_1 = np.sum(upstream_gradient, axis=(0,1), keepdims=True)
 
-        return grad_input
+        return upstream_gradient
     
 class LinearLayer:
     def __init__(self, input_size, output_size):
@@ -256,25 +270,25 @@ class LinearLayer:
         self.grad_weights = np.zeros_like(self.weights)
         self.grad_bias = np.zeros_like(self.bias)
 
-        print(f"self.grad_weights = {self.grad_weights}")
-        print(f"self.grad_bias = {self.grad_bias}")
+        # print(f"self.grad_weights = {self.grad_weights}")
+        # print(f"self.grad_bias = {self.grad_bias}")
 
     def __call__(self, input):
         self.input = input
         return input @ self.weights + self.bias
 
-    def backward(self, grad_output):
-        # Compute gradients
+    def backward(self, upstream_gradient):
         batch_size = len(self.input)
 
-        self.grad_weights = np.sum(self.input.transpose(0,2,1) @ grad_output, axis=0) / batch_size
-        self.grad_bias = np.sum(grad_output, axis=0, keepdims=True) / batch_size
+        # Update self.grad_weights and self.grad_bias
+        self.grad_weights = np.sum(np.matmul(self.input.transpose(0, 2, 1), upstream_gradient), axis=0) / batch_size
+        self.grad_bias = np.sum(upstream_gradient, axis=(0, 1), keepdims=True) / batch_size
 
         # Backpropagate the gradient
-        grad_input = grad_output * self.weights.T
+        grad_input = np.matmul(upstream_gradient, self.weights.T)
 
-        return grad_input
+        return grad_input.copy()
 
     def update_parameters(self, learning_rate):
         self.weights -= learning_rate * self.grad_weights
-        self.bias -= learning_rate * self.grad_bias
+        self.bias -= learning_rate * self.grad_bias.squeeze()

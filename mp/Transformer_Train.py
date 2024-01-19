@@ -143,7 +143,7 @@ def main():
             model.backward(batch_source_seq, batch_target_seq, model_output, target_labels)  # Adjust target_labels as needed
 
             # Update parameters
-            model.update_parameters(LEARNING_RATE)
+            # model.update_parameters(LEARNING_RATE)
 
             total_loss += model.get_loss()
             
