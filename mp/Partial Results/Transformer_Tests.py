@@ -13,7 +13,7 @@ from Operational_Blocks import *
 
 def construct_vocabulary():
     data = DataPreparation(num_sentences = SENTENCE_LENGTH, train_percentage = TRAIN_PERCENTAGE, max_seq_length = MAX_SEQ_LENGTH)
-    source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data(DATASET_PATH)
+    source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size, enc_vocab, dec_vocab = data(DATASET_PATH)
     print(f"train set: \n{train_set}\n")
 
     print(f"train_enc: \n{source_seq}\n")
@@ -24,7 +24,7 @@ def construct_vocabulary():
 
 def construct_input_embeddings():
     data = DataPreparation(num_sentences = SENTENCE_LENGTH, train_percentage = TRAIN_PERCENTAGE, max_seq_length = MAX_SEQ_LENGTH)
-    source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data(DATASET_PATH)
+    source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size, enc_vocab, dec_vocab = data(DATASET_PATH)
 
     print(f"train_enc: \n{source_seq}\n")
 
@@ -34,7 +34,7 @@ def construct_input_embeddings():
 
 def construct_positional_encodings():
     data = DataPreparation(num_sentences = SENTENCE_LENGTH, train_percentage = TRAIN_PERCENTAGE, max_seq_length = MAX_SEQ_LENGTH)
-    source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data(DATASET_PATH)
+    source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size, enc_vocab, dec_vocab = data(DATASET_PATH)
 
     print(f"train_enc: \n{source_seq}\n")
     print(f"Enc_seq_length: {enc_seq_length}\n")
@@ -50,7 +50,7 @@ def construct_positional_encodings():
 
 def construct_multi_head_attention_matrix(masked = False):
     data = DataPreparation(num_sentences = SENTENCE_LENGTH, train_percentage = TRAIN_PERCENTAGE, max_seq_length = MAX_SEQ_LENGTH)
-    source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data(DATASET_PATH)
+    source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size, enc_vocab, dec_vocab = data(DATASET_PATH)
 
     src_embed = InputEmbedding(D_MODEL, enc_vocab_size)
     input_embed = src_embed.embedding(source_seq)
@@ -66,7 +66,7 @@ def construct_multi_head_attention_matrix(masked = False):
 
 def perform_layer_normalization():
     data = DataPreparation(num_sentences = SENTENCE_LENGTH, train_percentage = TRAIN_PERCENTAGE, max_seq_length = MAX_SEQ_LENGTH)
-    source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data(DATASET_PATH)
+    source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size, enc_vocab, dec_vocab = data(DATASET_PATH)
 
     src_embed = InputEmbedding(D_MODEL, enc_vocab_size)
     input_embed = src_embed.embedding(source_seq)
@@ -85,7 +85,7 @@ def perform_layer_normalization():
 
 def construct_encoder():
     data = DataPreparation(num_sentences = SENTENCE_LENGTH, train_percentage = TRAIN_PERCENTAGE, max_seq_length = MAX_SEQ_LENGTH)
-    source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data(DATASET_PATH)
+    source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size, enc_vocab, dec_vocab = data(DATASET_PATH)
 
     src_embed = InputEmbedding(D_MODEL, enc_vocab_size)
     input_embed = src_embed.embedding(source_seq)
@@ -110,7 +110,7 @@ def construct_encoder():
 
 def construct_decoder():
     data = DataPreparation(num_sentences = SENTENCE_LENGTH, train_percentage = TRAIN_PERCENTAGE, max_seq_length = MAX_SEQ_LENGTH)
-    source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data(DATASET_PATH)
+    source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size, enc_vocab, dec_vocab = data(DATASET_PATH)
     
     target_embed = InputEmbedding(D_MODEL, dec_vocab_size)
     input_embed = target_embed.embedding(target_seq)
@@ -139,9 +139,9 @@ def construct_decoder():
     print(f"Decoder Output: \n{normalized_out_3}\n")
     print(f"Decoder Output Shape: {normalized_out_3.shape}")
 
-def construct_output_probs():
+def construct_predicted_sequence():
     data = DataPreparation(num_sentences = SENTENCE_LENGTH, train_percentage = TRAIN_PERCENTAGE, max_seq_length = MAX_SEQ_LENGTH)
-    source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data(DATASET_PATH)
+    source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size, enc_vocab, dec_vocab = data(DATASET_PATH)
     
     target_embed = InputEmbedding(D_MODEL, dec_vocab_size)
     input_embed = target_embed.embedding(target_seq)
@@ -183,11 +183,21 @@ def construct_output_probs():
     output_probs = softmax(output_logits, mask = target_mask)
     print(f"Output Probabilities: \n{output_probs}\n")
     print(f"Output Probabilities Shape: {output_probs.shape}\n")
+
+    # Get the index of the class with the highest probability
+    predicted_class = np.argmax(output_probs, axis=-1)
+    print(f'Predicted Indices: \n{predicted_class}\n')
+
+    # Get the corresponding sequences of the predicted indices
+    predicted_seqs = dec_vocab.idx_to_seq(predicted_class)
+    print(f'Predicted Sequences: \n')
+    for seq in predicted_seqs:
+        print(seq)
+
+
     
-    # One-hot encode the target sequence for the cross-entropy loss
-    target_probs = np.eye(dec_vocab_size)[target_seq]
-    print(f"Target Probabilities: \n{target_probs}\n")
-    print(f"Target Probabilities Shape: \n{target_probs.shape}\n")
+
+
 
 
 def main():
@@ -203,7 +213,7 @@ def main():
     # perform_layer_normalization()
     # construct_encoder()
     # construct_decoder()
-    construct_output_probs()
+    construct_predicted_sequence()
 
     # BACKPROPAGATION:
 

@@ -30,6 +30,10 @@ class Vocabulary:
         self.index_to_token = {}
         self.next_index = 1
 
+        # add <PAD> to vocab
+        self.token_to_index['<PAD>'] = 0
+        self.index_to_token[0] = '<PAD>'
+
     def build_vocab(self, token):
         if token not in self.token_to_index:
             index = self.next_index
@@ -55,8 +59,18 @@ class Vocabulary:
             seqs_indices.append(padded_indices)
         return seqs_indices
     
+    def idx_to_seq(self, idxs):
+        index_to_token = self.index_to_token
+
+        sequences = [
+            ' '.join([index_to_token[index] for index in row])
+            for row in idxs
+        ]
+
+        return sequences
+    
     def size(self):
-        return len(self.token_to_index) + 1 # we add 1 for the padding
+        return len(self.token_to_index)
 
     def __call__(self,train_set):
         # build vocab from train set
@@ -127,7 +141,7 @@ class DataPreparation:
         # One-hot encode target sequences
         target_labels = self.one_hot_encode_targets(train_set[:, 1], dec_vocab, dec_vocab_size, dec_seq_length)
 
-        return source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size
+        return source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size, enc_vocab, dec_vocab
 
 class InputEmbedding:
 
