@@ -6,12 +6,13 @@
 
 # Transformer Implementation Tests
 
-from Transformer_Constants import *
+
 from Operational_Blocks import *
-from Transformer_Train import *
+from Transformer_Constants_Tests import *
+
 
 def construct_vocabulary():
-    data = DataPreparation(num_sentences = SENTENCE_LENGTH, train_percentage = TRAIN_PERCENTAGE)
+    data = DataPreparation(num_sentences = SENTENCE_LENGTH, train_percentage = TRAIN_PERCENTAGE, max_seq_length = MAX_SEQ_LENGTH)
     source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data(DATASET_PATH)
     print(f"train set: \n{train_set}\n")
 
@@ -22,7 +23,7 @@ def construct_vocabulary():
     print(f"dec_seq_length: {dec_seq_length}, dec_vocab_size: {dec_vocab_size}")
 
 def construct_input_embeddings():
-    data = DataPreparation(num_sentences = SENTENCE_LENGTH, train_percentage = TRAIN_PERCENTAGE)
+    data = DataPreparation(num_sentences = SENTENCE_LENGTH, train_percentage = TRAIN_PERCENTAGE, max_seq_length = MAX_SEQ_LENGTH)
     source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data(DATASET_PATH)
 
     print(f"train_enc: \n{source_seq}\n")
@@ -32,14 +33,12 @@ def construct_input_embeddings():
     print("Shape: ",src_embed.embedding(source_seq).shape)
 
 def construct_positional_encodings():
-    data = DataPreparation(num_sentences = SENTENCE_LENGTH, train_percentage = TRAIN_PERCENTAGE)
+    data = DataPreparation(num_sentences = SENTENCE_LENGTH, train_percentage = TRAIN_PERCENTAGE, max_seq_length = MAX_SEQ_LENGTH)
     source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data(DATASET_PATH)
 
     print(f"train_enc: \n{source_seq}\n")
-
     print(f"Enc_seq_length: {enc_seq_length}\n")
 
-    # d_model = 10
     src_embed = InputEmbedding(D_MODEL, enc_vocab_size)
     input_embed = src_embed.embedding(source_seq)
     print(f"\n Input Embedding:\n {input_embed}\n")
@@ -49,47 +48,43 @@ def construct_positional_encodings():
     print(f"\n Final Embedding:\n {final_embed}")
     print(f"Final Embedding Shape: {final_embed.shape}")
 
-def construct_multi_head_attention_matrix():
-    data = DataPreparation(num_sentences = SENTENCE_LENGTH, train_percentage = TRAIN_PERCENTAGE)
+def construct_multi_head_attention_matrix(masked = False):
+    data = DataPreparation(num_sentences = SENTENCE_LENGTH, train_percentage = TRAIN_PERCENTAGE, max_seq_length = MAX_SEQ_LENGTH)
     source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data(DATASET_PATH)
 
-    # d_model = 12
     src_embed = InputEmbedding(D_MODEL, enc_vocab_size)
     input_embed = src_embed.embedding(source_seq)
 
     src_pos = PositionalEncoding(D_MODEL, enc_seq_length)
     final_embed = src_pos(input_embed)
 
-    # num_heads = 4
-    src_multi_attention = MultiHeadAttention(D_MODEL, HEADS, masked = True)
+    src_multi_attention = MultiHeadAttention(SENTENCE_LENGTH, D_MODEL, HEADS, masked)
     attention_out = src_multi_attention(final_embed, final_embed, final_embed)
 
-    print(f"attention_out: {attention_out}\n")
+    print(f"attention_out: \n{attention_out}\n")
     print(f"Attention Out Shape: {attention_out.shape}")
 
 def perform_layer_normalization():
-    data = DataPreparation(num_sentences = SENTENCE_LENGTH, train_percentage = TRAIN_PERCENTAGE)
+    data = DataPreparation(num_sentences = SENTENCE_LENGTH, train_percentage = TRAIN_PERCENTAGE, max_seq_length = MAX_SEQ_LENGTH)
     source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data(DATASET_PATH)
 
-    # d_model = 12
     src_embed = InputEmbedding(D_MODEL, enc_vocab_size)
     input_embed = src_embed.embedding(source_seq)
 
     src_pos = PositionalEncoding(D_MODEL, enc_seq_length)
     final_embed = src_pos(input_embed)
 
-    # num_heads = 4
-    src_multi_attention = MultiHeadAttention(D_MODEL, HEADS, masked = True)
+    src_multi_attention = MultiHeadAttention(SENTENCE_LENGTH, D_MODEL, HEADS, masked = True)
     attention_out  = src_multi_attention(final_embed, final_embed, final_embed)
 
     src_layer_norm = LayerNorm(D_MODEL)
     normalized_out = src_layer_norm(attention_out)
 
-    print(f"Normalized Out: {normalized_out}")
+    print(f"Normalized Out: \n{normalized_out}\n")
     print(f"Normalized Out Shape: {normalized_out.shape}")
 
 def construct_encoder():
-    data = DataPreparation(num_sentences = SENTENCE_LENGTH, train_percentage = TRAIN_PERCENTAGE)
+    data = DataPreparation(num_sentences = SENTENCE_LENGTH, train_percentage = TRAIN_PERCENTAGE, max_seq_length = MAX_SEQ_LENGTH)
     source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data(DATASET_PATH)
 
     src_embed = InputEmbedding(D_MODEL, enc_vocab_size)
@@ -98,7 +93,7 @@ def construct_encoder():
     src_pos = PositionalEncoding(D_MODEL, enc_seq_length)
     final_embed = src_pos(input_embed)
 
-    src_multi_head_attention = MultiHeadAttention(D_MODEL, HEADS)
+    src_multi_head_attention = MultiHeadAttention(SENTENCE_LENGTH, D_MODEL, HEADS)
     attention_out  = src_multi_head_attention(final_embed, final_embed, final_embed)
 
     src_layer_norm_1 = LayerNorm(D_MODEL)
@@ -110,11 +105,11 @@ def construct_encoder():
     src_layer_norm_2 = LayerNorm(D_MODEL)
     normalized_out_2 = src_layer_norm_2(ff_out)
 
-    print(f"Encoder Output: {normalized_out_2}\n")
+    print(f"Encoder Output: \n{normalized_out_2}\n")
     print(f"Encoder Output Shape: {normalized_out_2.shape}")
 
 def construct_decoder():
-    data = DataPreparation(num_sentences = SENTENCE_LENGTH, train_percentage = TRAIN_PERCENTAGE)
+    data = DataPreparation(num_sentences = SENTENCE_LENGTH, train_percentage = TRAIN_PERCENTAGE, max_seq_length = MAX_SEQ_LENGTH)
     source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data(DATASET_PATH)
     
     target_embed = InputEmbedding(D_MODEL, dec_vocab_size)
@@ -123,13 +118,13 @@ def construct_decoder():
     target_pos = PositionalEncoding(D_MODEL, dec_seq_length)
     final_embed = target_pos(input_embed)
 
-    target_masked_multi_head_attention = MultiHeadAttention(D_MODEL, HEADS, masked = True)
+    target_masked_multi_head_attention = MultiHeadAttention(SENTENCE_LENGTH, D_MODEL, HEADS, masked = True)
     attention_out_1 = target_masked_multi_head_attention(final_embed, final_embed, final_embed)
 
     target_layer_norm_1 = LayerNorm(D_MODEL)
     normalized_out_1 = target_layer_norm_1(attention_out_1)
 
-    target_multi_head_attention = MultiHeadAttention(D_MODEL, HEADS, masked = True)
+    target_multi_head_attention = MultiHeadAttention(SENTENCE_LENGTH, D_MODEL, HEADS, masked = False)
     attention_out_2 = target_multi_head_attention(normalized_out_1, normalized_out_1, normalized_out_1)
 
     target_layer_norm_2 = LayerNorm(D_MODEL)
@@ -141,17 +136,74 @@ def construct_decoder():
     target_layer_norm_3 = LayerNorm(D_MODEL)
     normalized_out_3 = target_layer_norm_3(ff_out)
 
-    print(f"Decoder Output: {normalized_out_3}\n")
+    print(f"Decoder Output: \n{normalized_out_3}\n")
     print(f"Decoder Output Shape: {normalized_out_3.shape}")
 
+def construct_output_probs():
+    data = DataPreparation(num_sentences = SENTENCE_LENGTH, train_percentage = TRAIN_PERCENTAGE, max_seq_length = MAX_SEQ_LENGTH)
+    source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data(DATASET_PATH)
+    
+    target_embed = InputEmbedding(D_MODEL, dec_vocab_size)
+    input_embed = target_embed.embedding(target_seq)
+
+    target_pos = PositionalEncoding(D_MODEL, dec_seq_length)
+    final_embed = target_pos(input_embed)
+
+    target_masked_multi_head_attention = MultiHeadAttention(SENTENCE_LENGTH, D_MODEL, HEADS, masked = True)
+    attention_out_1 = target_masked_multi_head_attention(final_embed, final_embed, final_embed)
+
+    target_layer_norm_1 = LayerNorm(D_MODEL)
+    normalized_out_1 = target_layer_norm_1(attention_out_1)
+
+    target_multi_head_attention = MultiHeadAttention(SENTENCE_LENGTH, D_MODEL, HEADS, masked = False)
+    attention_out_2 = target_multi_head_attention(normalized_out_1, normalized_out_1, normalized_out_1)
+
+    target_layer_norm_2 = LayerNorm(D_MODEL)
+    normalized_out_2 = target_layer_norm_2(attention_out_2)
+
+    target_ff = FeedForward(D_MODEL, D_FF)
+    ff_out = target_ff(normalized_out_2)
+
+    target_layer_norm_3 = LayerNorm(D_MODEL)
+    normalized_out_3 = target_layer_norm_3(ff_out)
+
+    print(f"Target Sequence: \n{target_seq}\n")
+    print(f"Max Seq Length: {dec_seq_length}, Vocab Size: {dec_vocab_size}")
+
+    # Final Linear Layer for Output
+    final_linear_layer = LinearLayer(D_MODEL, dec_vocab_size)
+    output_logits = final_linear_layer(normalized_out_3)
+    print(f"Output Logits: \n{output_logits}\n")
+    print(f"Output Logits Shape: {output_logits.shape}\n")
+
+    # Apply Softmax to get probabilities
+    target_mask = (target_seq != 0)
+    output_probs = softmax(output_logits, mask = target_mask)
+    print(f"Output Probabilities: \n{output_probs}\n")
+    print(f"Output Probabilities Shape: {output_probs.shape}\n")
+    
+    # One-hot encode the target sequence for the cross-entropy loss
+    target_probs = np.eye(dec_vocab_size)[target_seq]
+    print(f"Target Probabilities: \n{target_probs}\n")
+    print(f"Target Probabilities Shape: \n{target_probs.shape}\n")
+
+
 def main():
+    # comment out functions one at a time
+
+    # FEEDFORWARD:
+
     # construct_vocabulary()
     # construct_input_embeddings()
     # construct_positional_encodings()
     # construct_multi_head_attention_matrix()
+    # construct_multi_head_attention_matrix(masked=True)
     # perform_layer_normalization()
-    construct_encoder()
-    construct_decoder()
+    # construct_encoder()
+    # construct_decoder()
+    construct_output_probs()
+
+    # BACKPROPAGATION:
 
 if __name__ == "__main__":
     main()

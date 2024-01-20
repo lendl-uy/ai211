@@ -9,6 +9,9 @@
 import os
 import pickle
 import numpy as np
+import matplotlib.pyplot as plt
+import time
+
 
 from Transformer_Constants import *
 from Transformer import Transformer
@@ -55,9 +58,10 @@ class Vocabulary:
                 self.build_vocab(token)
 
 class DataPreparation:
-    def __init__(self, num_sentences, train_percentage):
+    def __init__(self, num_sentences, train_percentage, max_seq_length):
         self.num_sentences = num_sentences
         self.train_percentage = train_percentage
+        self.max_seq_length = max_seq_length
     
     def create_vocab(self, data):
         vocab = Vocabulary()
@@ -98,7 +102,7 @@ class DataPreparation:
         # Build vocab for encoder input
         enc_vocab = self.create_vocab(train_set[:,0])
         # enc_seq_length = self.max_seq_length(train_set[:,0])
-        enc_seq_length = MAX_SEQ_LENGTH
+        enc_seq_length = self.max_seq_length
 
         enc_vocab_size = enc_vocab.size()
         source_seq = enc_vocab.seq_to_idx(train_set[:,0], enc_seq_length) # also adds padding of 0s to reach enc_seq_length
@@ -106,7 +110,7 @@ class DataPreparation:
         # Build vocab for decoder input
         dec_vocab = self.create_vocab(train_set[:,1])
         # dec_seq_length = self.max_seq_length(train_set[:,1])
-        dec_seq_length = MAX_SEQ_LENGTH
+        dec_seq_length = self.max_seq_length
         
         dec_vocab_size = dec_vocab.size()
         target_seq = dec_vocab.seq_to_idx(train_set[:,1], dec_seq_length) # also adds padding of 0s to reach dec_seq_length
@@ -117,15 +121,19 @@ class DataPreparation:
         return source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size
 
 def main():
-    data = DataPreparation(num_sentences = SENTENCE_LENGTH, train_percentage = TRAIN_PERCENTAGE)
-    source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data('english-german-both.pkl')
+    data = DataPreparation(num_sentences = SENTENCE_LENGTH, train_percentage = TRAIN_PERCENTAGE, max_seq_length = MAX_SEQ_LENGTH)
+    source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size = data(DATASET_PATH)
     
     model = Transformer(d_model = D_MODEL, num_heads = HEADS, d_ff = D_FF, 
                         source_seq_length = MAX_SEQ_LENGTH, target_seq_length = MAX_SEQ_LENGTH, 
                         source_vocab_size = enc_vocab_size, target_vocab_size = dec_vocab_size, 
                         learning_rate = LEARNING_RATE)
     
+    train_losses = []
+    test_losses = []
+    
     for epoch in range(EPOCHS):
+        start_time = time.time()
 
         total_loss = 0.0
 
@@ -141,15 +149,32 @@ def main():
 
             # print(f"target_labels = {target_labels}")
 
-            # Backward pass
+            # Back propagate errors and update parameters
             model.backward(batch_source_seq, batch_target_seq, model_output, target_labels)  # Adjust target_labels as needed
 
             total_loss += model.get_loss()
             
-            print(f"Done Batch {i+1}")
+            print(f"Done Batch {(i // BATCH_SIZE) + 1}")
 
         average_loss = total_loss / (len(source_seq) // BATCH_SIZE)
-        print(f'Epoch {epoch + 1}, Average Loss: {average_loss}')
+        train_losses.append(average_loss)
+
+        # compute test loss
+        test_loss = 0
+        test_losses.append(test_loss)
+
+        print(f'Epoch {epoch + 1}, Average Train Loss: {average_loss}, Test Loss: {test_loss}')
+        print(f'Epoch run time: {(time.time() - start_time)}')
+
+    # Plotting the losses
+    plt.plot(train_losses, label='Training Loss')
+    plt.plot(test_losses, label='Test Loss')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.title('Training and Testing Loss Over Epochs')
+    plt.legend()
+    plt.show()
+
 
 
 if __name__ == "__main__":

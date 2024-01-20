@@ -10,7 +10,12 @@ Found in this project directory are the following files:
 - Transformer.py
 - Transformer_Tests.py
 
-In `Transformer.py`, it contains the transformer architecture written using the Numpy library in Python. You may check this file to inspect the implementation of the transformer.
+In `Transformer.py`, it contains the transformer architecture written using the Numpy library in Python. It brings together the encoder and decoder blocks in `Encoder.py` and `Decoder.py`. Moreover, `Operational_Blocks.py` contains all the classes and functions that were needed to construct all layers in the architecture. You may check these files to inspect the implementation of the transformer.
 
-On the other hand, `Transformer_Tests.py` contains the tests performed in verifying the correctness of the transformer implementation. RUN this file to check the results for different tests which include:
+Values of the hyperparameters and other variables used in the transformer modeling process may be changed in `Transformer_Constants.py`.
+
+Lstly, `Partial Results/Transformer_Tests.py` contains functions that print the outputs of corresponding layers in the transformer architecture.  RUN this file to check the results for different tests. All tests are commented out in the `main()` function of the code. Uncomment at least one test before running the program.
+
+The rest of the files in `Partial Results` are copies of the same files in the parent directory but are slightly modified to print out some intermediary results.
+
 
