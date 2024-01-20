@@ -39,6 +39,17 @@ class Decoder:
         # Backward pass through the masked multi-head attention
         grad_masked_multi_attention = self.masked_multi_attention.backward(grad_norm_1)
 
+        # FOR DEBUGGING
+        print("SHAPES HERE SHOULD MATCH DECODER OUTPUT SHAPES:")
+        print(f'grad norm3 (decoder output) = {grad_norm_3.shape}')
+        print(f'grad ff_output = {grad_ff.shape}')
+        print(f'grad norm2 = {grad_norm_2.shape}')
+        print(f'grad multi attention (query input) = {grad_multi_attention[0].shape}')
+        print(f'grad multi attention (key input) = {grad_multi_attention[1].shape}')
+        print(f'grad norm1 = {grad_norm_1.shape}')
+        print(f'grad masked multi attention (query input) = {grad_masked_multi_attention[0].shape}\n')
+
+
         return grad_multi_attention[1], grad_masked_multi_attention[0] # first gradient is for encoder block, second one is for target embedding
 
     def update_parameters(self, learning_rate):
@@ -93,11 +104,12 @@ class Decoder:
         decoder_output = self.norm_3(norm_2_output + ff_output)
 
         # FOR DEBUGGING
-        # print(f"dec masked_attention_output = {masked_attention_output.shape}")
-        # print(f"dec norm_1_output = {norm_1_output.shape}")
-        # print(f"dec attention_output = {attention_output.shape}")
-        # print(f"dec norm_2_output = {norm_2_output.shape}")
-        # print(f"dec ff_output = {ff_output.shape}")
-        # print(f"dec decoder_output = {decoder_output.shape}")
+        print("DECODER OUTPUT SHAPES:")
+        print(f"dec masked_attention_output = {masked_attention_output.shape}")
+        print(f"dec norm_1_output = {norm_1_output.shape}")
+        print(f"dec attention_output = {attention_output[0].shape}")
+        print(f"dec norm_2_output = {norm_2_output.shape}")
+        print(f"dec ff_output = {ff_output.shape}")
+        print(f"dec decoder_output = {decoder_output.shape}\n")
 
         return decoder_output

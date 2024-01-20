@@ -29,6 +29,12 @@ class Encoder:
         # Backward pass through the multi-head attention
         grad_multi_attention = self.multi_attention.backward(grad_norm1)
 
+        print('SHAPES HERE SHOULD MATCH WITH ENCODER OUTPUT SHAPES')
+        print(f'grad multi attention (key) = {grad_multi_attention[1].shape}')
+        print(f'grad norm1 = {grad_norm1.shape}')
+        print(f'grad ff_output = {grad_ff.shape}')
+        print(f'grad norm2 (enc output) = {grad_norm_2.shape}\n')
+
         return grad_multi_attention[1] # pass grad key to embedding layer
 
     def update_parameters(self, learning_rate):
@@ -68,9 +74,10 @@ class Encoder:
         encoder_output = self.norm_2(norm1_output + ff_output)
 
         # FOR DEBUGGING:
-        # print(f"enc attention_output = {attention_output.shape}")
-        # print(f"enc norm1_output = {norm1_output.shape}")
-        # print(f"enc ff_output = {ff_output.shape}")
-        # print(f"enc encoder_output = {encoder_output.shape}")
+        print("ENCODER OUTPUT SHAPES:")
+        print(f"enc attention_output = {attention_output.shape}")
+        print(f"enc norm1_output = {norm1_output.shape}")
+        print(f"enc ff_output = {ff_output.shape}")
+        print(f"enc encoder_output = {encoder_output.shape}\n")
 
         return encoder_output

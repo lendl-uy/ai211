@@ -320,6 +320,12 @@ class MultiHeadAttention:
         if grad_key_input_norm > THRESHOLD: 
             grad_key_input *= (THRESHOLD / grad_key_input_norm)
 
+        print("MULTI HEAD WEIGHT MATRICES")
+        print(f'W_q = {self.W_q.shape}, Grad W_q = {self.grad_W_q.shape}')
+        print(f'W_k = {self.W_k.shape}, Grad W_k = {self.grad_W_k.shape}')
+        print(f'W_v = {self.W_v.shape}, Grad W_v = {self.grad_W_v.shape}')
+        print(f'W_o = {self.W_o.shape}, Grad W_o = {self.grad_W_o.shape}\n')
+
         return grad_query_input, grad_key_input
 
 class LayerNorm:
@@ -350,6 +356,10 @@ class LayerNorm:
         # Squeeze the extra dimensions to get vectors
         self.grad_gamma = self.grad_gamma.squeeze()
         self.grad_beta = self.grad_beta.squeeze()
+
+        print("LAYER NORM GRADIENTS")
+        print(f'Gamma = {self.gamma.shape}, Grad Gamma = {self.grad_gamma.shape}')
+        print(f'Betea = {self.beta.shape}, Grad Beta = {self.grad_beta.shape}')
 
         # # Clip grads if it explodes
         # grad_gamma_norm = np.linalg.norm(self.grad_gamma)
@@ -484,6 +494,12 @@ class FeedForward:
         # upstream_gradient_norm = np.linalg.norm(upstream_gradient)
         # if upstream_gradient_norm > THRESHOLD: 
         #     upstream_gradient *= (THRESHOLD / upstream_gradient_norm)
+
+        print("FEED FOWARD GRADIENTS")
+        print(f'2nd Layer Weights = {self.weights_2.shape}, Gradient = {self.grad_weights_2.shape}')
+        print(f'2nd Layer Biases = {self.biases_2.shape}, Gradient = {self.grad_biases_2.shape}')
+        print(f'1st Layer Weights = {self.weights_1.shape}, Gradient = {self.grad_weights_1.shape}')
+        print(f'1st Layer Biases = {self.biases_1.shape}, Gradient = {self.grad_biases_1.shape}')
 
         return upstream_gradient
     

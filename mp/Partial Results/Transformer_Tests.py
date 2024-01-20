@@ -6,7 +6,7 @@
 
 # Transformer Implementation Tests
 
-
+from Transformer import *
 from Transformer_Constants_Tests import *
 from Operational_Blocks import *
 
@@ -170,7 +170,7 @@ def construct_predicted_sequence():
 
     print(f'Target Sentences: \n{train_set[:,1]}\n')
     print(f"Target Sequence: \n{target_seq}\n")
-    print(f"Max Seq Length: {dec_seq_length}, Vocab Size: {dec_vocab_size}")
+    print(f"Max Seq Length: {dec_seq_length}, Vocab Size: {dec_vocab_size}\n")
 
     # Final Linear Layer for Output
     final_linear_layer = LinearLayer(D_MODEL, dec_vocab_size)
@@ -190,9 +190,32 @@ def construct_predicted_sequence():
 
     # Get the corresponding sequences of the predicted indices
     predicted_seqs = dec_vocab.idx_to_seq(predicted_class)
-    print(f'Predicted Sequences: \n')
+    print(f'Predicted Sequences:')
     for seq in predicted_seqs:
         print(seq)
+
+
+def backward_pass():
+    data = DataPreparation(num_sentences = SENTENCE_LENGTH, train_percentage = TRAIN_PERCENTAGE, max_seq_length = MAX_SEQ_LENGTH)
+    source_seq, target_seq, target_labels, train_set, test_set, enc_seq_length, dec_seq_length, enc_vocab_size, dec_vocab_size, enc_vocab, dec_vocab = data(DATASET_PATH)
+    
+    model = Transformer(d_model = D_MODEL, num_heads = HEADS, d_ff = D_FF, 
+                        source_seq_length = MAX_SEQ_LENGTH, target_seq_length = MAX_SEQ_LENGTH, 
+                        source_vocab_size = enc_vocab_size, target_vocab_size = dec_vocab_size, 
+                        learning_rate = LEARNING_RATE)
+    
+    # Forward pass
+    model_output = model(source_seq, target_seq)
+
+    target_labels = np.eye(dec_vocab_size)[target_seq]
+
+    # print(f"target_labels = {target_labels}")
+
+    # Back propagate errors and update parameters
+    model.backward(source_seq, target_seq, model_output, target_labels)  # Adjust target_labels as needed
+
+    loss = model.get_loss()
+    print(f"Total Loss: {loss}")
 
 
     
@@ -205,7 +228,7 @@ def main():
 
     # FEEDFORWARD:
 
-    # construct_vocabulary()
+    construct_vocabulary()
     # construct_input_embeddings()
     # construct_positional_encodings()
     # construct_multi_head_attention_matrix()
@@ -213,9 +236,14 @@ def main():
     # perform_layer_normalization()
     # construct_encoder()
     # construct_decoder()
-    construct_predicted_sequence()
+    # construct_predicted_sequence()
 
     # BACKPROPAGATION:
+    # for this section, we only output the shape of the parameters that need to be updated and their corresponding gradients.
+    
+    # backward_pass()
+
+
 
 if __name__ == "__main__":
     main()
