@@ -20,11 +20,13 @@ class Vocabulary:
     def __init__(self):
         self.token_to_index = {}
         self.index_to_token = {}
-        self.next_index = 1
+        self.next_index = 2
 
-        # add <PAD> to vocab
+        # add <PAD> and <UNK> to vocab
         self.token_to_index['<PAD>'] = 0
         self.index_to_token[0] = '<PAD>'
+        self.token_to_index['<UNK>'] = 1
+        self.index_to_token[1] = '<UNK>'
 
     def build_vocab(self, token):
         if token not in self.token_to_index:
@@ -42,7 +44,7 @@ class Vocabulary:
     def seq_to_idx(self, seqs, max_seq_length):
         seqs_indices = []
         for seq in seqs:
-            indices = [self.token_to_index[token] for token in seq.split() if token in self.token_to_index]
+            indices = [self.token_to_index.get(token, self.token_to_index['<UNK>']) for token in seq.split()]
 
             if len(indices) > max_seq_length:
                 print(f"Sequence is too long. Max sequence length is {max_seq_length}.")
@@ -145,7 +147,11 @@ def main():
     
     train_losses = []
     test_losses = []
-    
+
+    # For testing
+    test_source_seq = enc_vocab.seq_to_idx(test_set[:,0], enc_seq_length)
+    test_target_seq = dec_vocab.seq_to_idx(test_set[:,1], dec_seq_length)
+
     for epoch in range(EPOCHS):
         start_time = time.time()
 
@@ -174,7 +180,8 @@ def main():
         train_losses.append(average_loss)
 
         # compute test loss
-        test_loss = 0
+        model_output = model(test_source_seq, test_target_seq, eval = True)
+        test_loss = model.get_loss(eval=True)
         test_losses.append(test_loss)
 
         print(f'Epoch {epoch + 1}, Average Train Loss: {average_loss}, Test Loss: {test_loss}')

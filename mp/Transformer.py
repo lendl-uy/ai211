@@ -32,6 +32,7 @@ class Transformer:
         self.target_vocab_size = target_vocab_size
         self.learning_rate = learning_rate
         self._loss = 0.0
+        self.test_loss = 0.0
 
         # Input Embedding
         self.source_embedding = InputEmbedding(d_model, source_vocab_size)
@@ -69,11 +70,15 @@ class Transformer:
         # Compute the derivative of categorical cross entropy loss
         return -labels/logits
     
-    def get_loss(self):
-
-        return self._loss
+    def get_loss(self, eval = False):
+        if eval:
+            return self.test_loss
+        else:
+            return self._loss
         
-    def __call__(self, source_seq, target_seq):
+    def __call__(self, source_seq, target_seq, eval = False):
+        # self.eval = eval
+
         # Input Embedding
         source_embedded = self.source_embedding(source_seq)
         target_embedded = self.target_embedding(target_seq)
@@ -98,7 +103,10 @@ class Transformer:
         # One-hot encode the target sequence for the cross-entropy loss
         target_probs = np.eye(self.target_vocab_size)[target_seq]
 
-        self._loss = self.cross_entropy_loss(output_probs, target_probs, target_mask)
+        if eval:
+            self.test_loss = self.cross_entropy_loss(output_probs, target_probs, target_mask)
+        else:
+            self._loss = self.cross_entropy_loss(output_probs, target_probs, target_mask)
 
         # FOR DEBUGGING:
         # print(f"source_embedded = {source_embedded.shape}")
