@@ -7,8 +7,8 @@
 # Transformer Implementation Tests
 
 
-from Operational_Blocks import *
 from Transformer_Constants_Tests import *
+from Operational_Blocks import *
 
 
 def construct_vocabulary():
@@ -167,6 +167,8 @@ def construct_output_probs():
     target_layer_norm_3 = LayerNorm(D_MODEL)
     normalized_out_3 = target_layer_norm_3(ff_out)
 
+
+    print(f'Target Sentences: \n{train_set[:,1]}\n')
     print(f"Target Sequence: \n{target_seq}\n")
     print(f"Max Seq Length: {dec_seq_length}, Vocab Size: {dec_vocab_size}")
 

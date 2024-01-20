@@ -65,6 +65,7 @@ class Vocabulary:
             for token in tokens:
                 self.build_vocab(token)
 
+
 class DataPreparation:
     def __init__(self, num_sentences, train_percentage, max_seq_length):
         self.num_sentences = num_sentences
