@@ -6,6 +6,7 @@
 # [5] FeedForward
 # [6] LinearLayer
 
+
 import numpy as np
 from Transformer_Constants import *
 

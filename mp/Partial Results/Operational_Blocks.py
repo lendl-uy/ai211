@@ -6,8 +6,10 @@
 # [5] FeedForward
 # [6] LinearLayer
 
+import os
+import pickle
 import numpy as np
-from Transformer_Constants import *
+from Transformer_Constants_Tests import *
 
 
 def softmax(x, mask=None):
