@@ -44,7 +44,14 @@ class InputEmbedding:
     
     def __call__(self, input_indices):
         input_indices = np.array(input_indices)
-        return self.embedding(input_indices) * np.sqrt(self.d_model)
+        embedded_output = self.embedding(input_indices) * np.sqrt(self.d_model)
+
+        print(embedded_output.shape)
+
+        if embedded_output.ndim == 2:
+            embedded_output = embedded_output[np.newaxis, :, :]
+
+        return embedded_output
     
     def backward(self, input_indices, upstream_gradient):
         # Compute gradients for the vocab_embedding
@@ -73,7 +80,6 @@ class PositionalEncoding:
         # print("pos embed shape: \n",self.pos_embed.shape)
 
     def __call__(self, input_embeddings):
-        pos_embed_3d = np.tile(self.pos_embed[np.newaxis, :, :], (input_embeddings.shape[0], 1, 1))
         pos_embed_3d = np.tile(self.pos_embed[np.newaxis, :, :], (input_embeddings.shape[0], 1, 1))
         input_embeddings += pos_embed_3d
         
