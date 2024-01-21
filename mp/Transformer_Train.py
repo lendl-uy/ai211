@@ -61,13 +61,14 @@ for epoch in range(EPOCHS):
         loss = cross_entropy.loss(model_output_reshaped, batch_target_seq_flat).mean()
         total_loss.append(loss)
 
-        # Update progress bar
-        tqdm_range.set_description(f"Testing | Cross Entropy Loss: {loss}")
-
         # Backward pass
         grad_upstream = cross_entropy.derivative(model_output_reshaped, batch_target_seq_flat)
         grad_upstream_reshaped = grad_upstream.reshape(model_output.shape)
         model.backward(grad_upstream_reshaped, batch_source_seq, batch_target_seq)
+
+        # Update progress bar
+        tqdm_range.set_description(f"TEST | Epoch {epoch + 1}/{EPOCHS} | Cross Entropy Loss: {loss:.3f}")
+        tqdm_range.update(1)
         
         # print(f"Done Batch {batch+1}, Loss: {loss}\n")
         batch += 1
