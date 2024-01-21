@@ -318,12 +318,44 @@ class Softmax:
         self.output = exps/ np.sum(exps)
 
         return self.output
+    
+    def backward(self, dout):
+        if len(self.x.shape) == 3:
+            batch_size, seq_length, vocab_size = self.x.shape
+            num_heads = 1  # Set num_heads to 1 for 3D tensors
+            dout_reshaped = dout.reshape(batch_size, seq_length, vocab_size)
+        elif len(self.x.shape) == 4:
+            batch_size, num_heads, seq_length, _ = self.x.shape
+            dout_reshaped = dout.reshape(batch_size, num_heads, seq_length, seq_length)
 
-    def backward(self, grad):
-        x = self.x
-        f_x = self.forward(self.x)
+        # Compute the gradient of the softmax
+        dx = np.zeros_like(self.output)
 
-        return grad * (f_x * (1.0 - f_x))
+        for i in range(batch_size):
+            for h in range(num_heads):
+                for t in range(seq_length):
+                    if len(self.x.shape) == 3:
+                        softmax_output = self.output[i, t, :]
+                    elif len(self.x.shape) == 4:
+                        softmax_output = self.output[i, h, t, :]
+                    jacobian = np.diag(softmax_output) - np.outer(softmax_output, softmax_output)
+
+                    if len(self.x.shape) == 3:
+                        dx[i, t, :] = np.dot(dout_reshaped[i, t, :], jacobian)
+                    elif len(self.x.shape) == 4:
+                        dx[i, h, t, :] = np.dot(dout_reshaped[i, h, t, :], jacobian)
+
+        return dx
+
+    # def forward(self, x):
+    #     self.x = x
+    #     return 1 / (1 + np.exp(-x))
+
+    # def backward(self, grad):
+    #     x = self.x
+    #     f_x = self.forward(self.x)
+
+    #     return grad * (f_x * (1.0 - f_x))
     
 class LogSoftmax:
     def __init__(self):
