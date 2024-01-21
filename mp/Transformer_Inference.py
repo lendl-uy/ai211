@@ -135,17 +135,10 @@ class Translator:
 def main():
     translator = Translator()
     translator.load_model_params('mp/transformer_params.pkl')
-    translator.translate('Tom, trust your father.')
+    translator.translate('Tom, trust your father.') # add your sentence here.
 
 
     
-
-
-    
-
-
-
-
 
 
 
