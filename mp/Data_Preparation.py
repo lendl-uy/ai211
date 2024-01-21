@@ -8,7 +8,13 @@ class Vocabulary:
     def __init__(self):
         self.token_to_index = {}
         self.index_to_token = {}
-        self.next_index = 1
+        self.next_index = 2
+
+        # add <PAD> and <UNK> to vocab
+        self.token_to_index['<PAD>'] = 0
+        self.index_to_token[0] = '<PAD>'
+        self.token_to_index['<UNK>'] = 1
+        self.index_to_token[1] = '<UNK>'
 
     def build_vocab(self, token):
         if token not in self.token_to_index:
@@ -16,6 +22,7 @@ class Vocabulary:
             self.token_to_index[token] = index
             self.index_to_token[index] = token
             self.next_index += 1
+
 
     def seq_to_idx(self, seqs, max_seq_length):
         seqs_indices = []
@@ -28,6 +35,16 @@ class Vocabulary:
             padded_indices = indices + [0] * (max_seq_length - len(indices))
             seqs_indices.append(padded_indices)
         return seqs_indices
+    
+    def idx_to_seq(self, idxs):
+        index_to_token = self.index_to_token
+
+        sequences = [
+            ' '.join([index_to_token[index] for index in row])
+            for row in idxs
+        ]
+
+        return sequences
     
     def size(self):
         return len(self.token_to_index) + 1 # we add 1 for the padding

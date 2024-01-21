@@ -313,7 +313,11 @@ class Softmax:
 
     def forward(self, x):
         self.x = x
-        return 1 / (1 + np.exp(-x))
+        shiftx = x - np.max(x)
+        exps = np.exp(shiftx)
+        self.output = exps/ np.sum(exps)
+
+        return self.output
 
     def backward(self, grad):
         x = self.x

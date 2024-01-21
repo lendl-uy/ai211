@@ -165,5 +165,5 @@ transformer_params = {
     "final_linear_bias": model.output_linear_layer.bias
     }
 
-with open('transformer_params.pkl', 'wb') as file:
+with open('mp/transformer_params.pkl', 'wb') as file:
     pickle.dump(transformer_params, file)
