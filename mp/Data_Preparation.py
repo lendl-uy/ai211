@@ -47,7 +47,7 @@ class Vocabulary:
         return sequences
     
     def size(self):
-        return len(self.token_to_index) + 1 # we add 1 for the padding
+        return len(self.token_to_index) 
 
     def __call__(self,train_set):
         # build vocab from train set
