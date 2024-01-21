@@ -8,12 +8,10 @@
 
 # Reference: https://github.com/ajhalthor/Transformer-Neural-Network/blob/main/Transformer_Trainer_Notebook.ipynb
 
-
 import numpy as np
 import pickle
 import string
 from Transformer import Transformer
-
 
 class Translator: 
     def load_model_params(self, filepath):
@@ -94,7 +92,6 @@ class Translator:
 
         return indices
     
-
     def idx_to_seq(self, idxs):
         index_to_token = self.dec_vocab_index_to_token
 
@@ -105,15 +102,12 @@ class Translator:
 
         return sequences
 
-
-
     def translate(self, src_sentence):
 
         print(f"Sentence: {src_sentence}")
 
         enc_input = self.tokenize(src_sentence)
         dec_input = np.array([self.dec_vocab_token_to_index['<SOS>']], dtype=np.int32)[np.newaxis, :]
-
 
         while dec_input[:,-1] != self.dec_vocab_token_to_index['<EOS>'] and dec_input.shape[1] <= self.max_seq_length:
             output_probs = self.model.forward(enc_input, dec_input)
@@ -123,7 +117,6 @@ class Translator:
 
             # Append the predicted class to the decoder input
             dec_input = np.concatenate([dec_input, predicted_class[:, -1:]], axis=-1)
-
 
         # Convert the predicted sequence to tokens
         predicted_seqs = self.idx_to_seq(dec_input)
@@ -136,13 +129,8 @@ class Translator:
 
 def main():
     translator = Translator()
-    translator.load_model_params('mp/transformer_params.pkl')
-    translator.translate('I am good.') # add your sentence here.
-
-
-    
-
-
+    translator.load_model_params('transformer_params.pkl')
+    translator.translate('I am good.') # Add your sentence here.
 
 if __name__ == "__main__":
     main()

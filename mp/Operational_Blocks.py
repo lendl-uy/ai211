@@ -128,7 +128,7 @@ class MultiHeadAttention:
         self.mask = np.asarray(mask)
         if self.mask is not None:
             self.mask = self.mask[:, np.newaxis, ...]
-            E = np.where(self.mask == 0, float('-inf'), E) #float("-1e20")
+            E = np.where(self.mask == 0, float('-1e20'), E)
 
         self.attention_scores = self.softmax.forward(E)
         attention_heads = self.attention_scores @ self.V_split
@@ -335,16 +335,6 @@ class Softmax:
                         dx[i, h, t, :] = np.dot(dout_reshaped[i, h, t, :], jacobian)
 
         return dx
-
-    # def forward(self, x):
-    #     self.x = x
-    #     return 1 / (1 + np.exp(-x))
-
-    # def backward(self, grad):
-    #     x = self.x
-    #     f_x = self.forward(self.x)
-
-    #     return grad * (f_x * (1.0 - f_x))
     
 class LogSoftmax:
     def __init__(self):

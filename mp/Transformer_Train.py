@@ -50,13 +50,9 @@ for epoch in range(EPOCHS):
     for i in range(0, len(source_seq), BATCH_SIZE):
         batch_source_seq = source_seq[i:i + BATCH_SIZE]
         batch_target_seq = target_seq[i:i + BATCH_SIZE]
-    
-        # print(f"batch_source_seq = {batch_source_seq}")
-        # print(f"batch_target_seq = {batch_target_seq}")
 
         # Forward pass
         model_output = model.forward(batch_source_seq, batch_target_seq)
-        # print(f"model_output = {model_output}")
 
         # target_labels = np.eye(dec_vocab_size)[batch_target_seq]
         # print(f"batch_target_seq = {batch_target_seq}")
