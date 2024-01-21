@@ -40,6 +40,17 @@ class Transformer:
         self.output_linear_layer = Linear(D_MODEL, target_vocab_size)
         self.output_softmax_layer = Softmax()
 
+    def get_pad_mask(self, x):
+        #x: (batch_size, seq_len)
+        return (x != 0).astype(int)[:, np.newaxis, :]
+
+    def get_sub_mask(self, x):
+        #x: (batch_size, seq_len)
+        seq_len = x.shape[1]
+        subsequent_mask = np.triu(np.ones((seq_len, seq_len)), k = 1).astype(int)
+        subsequent_mask = np.logical_not(subsequent_mask)
+        return subsequent_mask
+
     def forward(self, source_seq, target_seq):
 
         # Create input embeddings 
@@ -50,9 +61,15 @@ class Transformer:
         source_pos_encoding = self.source_pos_embedding_layer.forward(source)
         target_pos_encoding = self.target_pos_embedding_layer.forward(target)
 
+        # Get the mask for the attention block in the encoder and the decoder
+        # print(f"source_seq = {len(source_seq)}")
+        # print(f"target_seq = {len(target_seq)}")
+        source_mask = self.get_pad_mask(np.array(source_seq))
+        target_mask = self.get_pad_mask(np.array(target_seq)) & self.get_sub_mask(np.array(target_seq))
+
         # Forward pass through the encoder
-        encoder_output = self.encoder.forward(source_pos_encoding)
-        decoder_output = self.decoder.forward(encoder_output, target_pos_encoding)
+        encoder_output = self.encoder.forward(source_pos_encoding, source_mask)
+        decoder_output = self.decoder.forward(encoder_output, target_pos_encoding, source_mask, target_mask)
 
         # Forward pass through the output blocks
         logits = self.output_linear_layer.forward(decoder_output)

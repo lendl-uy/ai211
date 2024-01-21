@@ -40,11 +40,11 @@ test_target_seq = dec_vocab.seq_to_idx(test_set[:,1], MAX_SEQ_LENGTH)
 
 for epoch in range(EPOCHS):
 
-    total_loss = []
+    loss_per_batch = []
     batch = 0
 
     # Initialize printing of loss per batch
-    tqdm_range = tqdm( enumerate(zip(source_seq, target_seq)), total = len(source_seq))
+    tqdm_range = tqdm(total = len(source_seq) // BATCH_SIZE)
     
     # Iterate over batches
     for i in range(0, len(source_seq), BATCH_SIZE):
@@ -69,7 +69,7 @@ for epoch in range(EPOCHS):
 
         # Compute the loss
         loss = cross_entropy.loss(model_output_reshaped, batch_target_seq_flat).mean()
-        total_loss.append(loss)
+        loss_per_batch.append(loss)
 
         # Backward pass
         grad_upstream = cross_entropy.derivative(model_output_reshaped, batch_target_seq_flat)
@@ -77,13 +77,13 @@ for epoch in range(EPOCHS):
         model.backward(grad_upstream_reshaped, batch_source_seq, batch_target_seq)
 
         # Update progress bar
-        tqdm_range.set_description(f"TRAIN | Epoch {epoch + 1}/{EPOCHS} | Cross Entropy Loss: {loss:.3f}")
+        tqdm_range.set_description(f"TRAIN | Epoch {epoch + 1}/{EPOCHS} | Cross Entropy Loss: {np.mean(loss_per_batch):.3f}")
         tqdm_range.update(1)
         
         # print(f"Done Batch {batch+1}, Loss: {loss}\n")
         batch += 1
 
-    average_loss = np.mean(total_loss)
+    average_loss = np.mean(loss_per_batch)
     train_losses.append(average_loss)
 
     # compute test loss

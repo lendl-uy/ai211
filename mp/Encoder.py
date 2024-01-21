@@ -10,9 +10,9 @@ class Encoder:
         self.ff_layer = Feedforward(d_model, d_ff) # Feedforward Layer
         self.norm_layer_2 = Normalization(d_model) # Second Normalization Layer
 
-    def forward(self, source_pos_embeddings):
+    def forward(self, source_pos_embeddings, source_mask):
 
-        mha_layer_out = self.mha_layer.forward(source_pos_embeddings, source_pos_embeddings, source_pos_embeddings)
+        mha_layer_out = self.mha_layer.forward(source_pos_embeddings, source_pos_embeddings, source_pos_embeddings, source_mask)
         norm_layer_1_out = self.norm_layer_1.forward(mha_layer_out + source_pos_embeddings)
 
         ff_layer_out = self.ff_layer.forward(norm_layer_1_out)

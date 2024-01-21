@@ -59,10 +59,9 @@ class PositionalEncoding:
 
 class MultiHeadAttention:
 
-    def __init__(self, d_model = D_MODEL, num_heads = HEADS, dropout = DROPOUT_PERCENT, mask=False):
+    def __init__(self, d_model = D_MODEL, num_heads = HEADS, dropout = DROPOUT_PERCENT):
         self.d_k = d_model // num_heads
         self.num_heads = num_heads
-        self.mask = mask
 
         scaling = np.sqrt(2 / d_model)
 
@@ -100,7 +99,7 @@ class MultiHeadAttention:
         batch_size = x.shape[0]
         return x.reshape(batch_size, -1, self.num_heads, self.d_k).transpose(0, 2, 1, 3)
 
-    def forward(self, Q, K, V):
+    def forward(self, Q, K, V, mask):
 
         self.Q = Q.copy()
         self.K = K.copy()
@@ -126,19 +125,10 @@ class MultiHeadAttention:
         # Compute the Attention matrix
         E = self.Q_split @ self.K_split.transpose(0, 1, 3, 2) / np.sqrt(self.d_k)
 
-        if self.mask:
-            seq_length = E.shape[-1]
-            batch_size = E.shape[0]
-            num_heads = E.shape[1]
-
-            mask = np.tril(np.ones((seq_length, seq_length)))
-            mask_4d = mask[:, :, np.newaxis, np.newaxis]
-            mask_4d = np.tile(mask_4d, (1, 1, num_heads, batch_size))
-            mask_4d = np.transpose(mask_4d, (3, 2, 0, 1))
-
-            E = E * mask_4d
-            E = np.where(mask_4d == 0, -np.inf, E)
-            E = E + 1e-12 # for numerical stability
+        self.mask = np.asarray(mask)
+        if self.mask is not None:
+            self.mask = self.mask[:, np.newaxis, ...]
+            E = np.where(self.mask == 0, float('-inf'), E) #float("-1e20")
 
         self.attention_scores = self.softmax.forward(E)
         attention_heads = self.attention_scores @ self.V_split
@@ -163,8 +153,7 @@ class MultiHeadAttention:
         grad_upstream = self.softmax.backward(grad_upstream)
         # print(f"softmax backward = {grad_upstream.shape}") 
 
-        if self.mask:
-            # print(f"mask!")
+        if self.mask is not None:
             grad_upstream = np.where(self.mask == 0, 0, grad_upstream)
 
         grad_upstream = grad_upstream * 1/np.sqrt(self.d_k)

@@ -4,7 +4,7 @@ class Decoder:
 
     def __init__(self, d_model, d_ff, num_heads, dropout):
 
-        self.mmha_layer = MultiHeadAttention(d_model, num_heads, dropout, mask=True) # Masked Multi-Head Attention Layer
+        self.mmha_layer = MultiHeadAttention(d_model, num_heads, dropout) # Masked Multi-Head Attention Layer
         self.norm_layer_1 = Normalization(d_model) # First Normalization Layer
 
         self.mha_layer = MultiHeadAttention(d_model, num_heads, dropout) # Multi-Head Attention Layer
@@ -13,12 +13,12 @@ class Decoder:
         self.ff_layer = Feedforward(d_model, d_ff) # Multi-Head Attention Layer
         self.norm_layer_3 = Normalization(d_model) # Third Normalization Layer
 
-    def forward(self, encoder_output, target_embeddings):
+    def forward(self, encoder_output, target_embeddings, source_mask, target_mask):
 
-        mmha_layer_out = self.mmha_layer.forward(target_embeddings, target_embeddings, target_embeddings)
+        mmha_layer_out = self.mmha_layer.forward(target_embeddings, target_embeddings, target_embeddings, target_mask)
         norm_layer_1_out = self.norm_layer_1.forward(mmha_layer_out + target_embeddings)
 
-        mha_layer_out = self.mha_layer.forward(norm_layer_1_out, encoder_output, encoder_output)
+        mha_layer_out = self.mha_layer.forward(norm_layer_1_out, encoder_output, encoder_output, source_mask)
         norm_layer_2_out = self.norm_layer_2.forward(mha_layer_out + norm_layer_1_out)
 
         ff_layer_out = self.ff_layer.forward(norm_layer_2_out)
