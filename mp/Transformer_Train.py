@@ -67,7 +67,7 @@ for epoch in range(EPOCHS):
         model.backward(grad_upstream_reshaped, batch_source_seq, batch_target_seq)
 
         # Update progress bar
-        tqdm_range.set_description(f"TEST | Epoch {epoch + 1}/{EPOCHS} | Cross Entropy Loss: {loss:.3f}")
+        tqdm_range.set_description(f"TRAIN | Epoch {epoch + 1}/{EPOCHS} | Cross Entropy Loss: {loss:.3f}")
         tqdm_range.update(1)
         
         # print(f"Done Batch {batch+1}, Loss: {loss}\n")
