@@ -101,4 +101,4 @@ class DataPreparation:
         # One-hot encode target sequences
         target_labels = self.one_hot_encode_targets(train_set[:, 1], self.dec_vocab, dec_vocab_size, MAX_SEQ_LENGTH)
 
-        return source_seq, target_seq, target_labels, train_set, test_set, enc_vocab_size, dec_vocab_size
+        return source_seq, target_seq, target_labels, train_set, test_set, enc_vocab_size, dec_vocab_size, self.enc_vocab, self.dec_vocab

@@ -4,6 +4,8 @@
 
 import numpy as np
 from tqdm import tqdm
+import matplotlib.pyplot as plt
+
 
 from Transformer_Constants import *
 from Transformer import Transformer
@@ -11,7 +13,7 @@ from Data_Preparation import DataPreparation
 from Operational_Blocks import CrossEntropy
 
 data = DataPreparation(num_sentences = SENTENCE_LENGTH, train_percentage = TRAIN_PERCENTAGE)
-source_seq, target_seq, target_labels, train_set, test_set, enc_vocab_size, dec_vocab_size = data('english-german-both.pkl')
+source_seq, target_seq, target_labels, train_set, test_set, enc_vocab_size, dec_vocab_size, enc_vocab, dec_vocab = data('english-german-both.pkl')
 
 # print(f"source_seq = {source_seq}")
 # print(f"target_seq = {target_seq}")
@@ -27,6 +29,13 @@ model = Transformer(d_model = D_MODEL, num_heads = HEADS, d_ff = D_FF,
                     learning_rate = LEARNING_RATE)
 
 cross_entropy = CrossEntropy()
+
+train_losses = []
+test_losses = []
+
+# For testing
+test_source_seq = enc_vocab.seq_to_idx(test_set[:,0], MAX_SEQ_LENGTH)
+test_target_seq = dec_vocab.seq_to_idx(test_set[:,1], MAX_SEQ_LENGTH)
 
 for epoch in range(EPOCHS):
 
@@ -74,4 +83,28 @@ for epoch in range(EPOCHS):
         batch += 1
 
     average_loss = np.mean(total_loss)
-    # print(f'Epoch {epoch + 1}, Average Loss: {average_loss}')
+    train_losses.append(average_loss)
+
+    # compute test loss
+    test_model_output = model.forward(test_source_seq, test_target_seq)
+
+    # Reshape model output to 2D and target labels to 1D 
+    # for computation of loss
+    i, j, k = test_model_output.shape
+    test_model_output_reshaped = np.reshape(test_model_output, (i*j, k))
+    test_target_seq_flat = np.array(test_target_seq).astype(np.int32).flatten()
+
+    # Compute the loss
+    test_loss = cross_entropy.loss(test_model_output_reshaped, test_target_seq_flat).mean()
+    test_losses.append(test_loss)
+
+    print(f'Epoch {epoch + 1}, Average Train Loss: {average_loss}, Test Loss: {test_loss}')
+
+# Plotting the losses
+plt.plot(train_losses, label='Training Loss')
+plt.plot(test_losses, label='Test Loss')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.title('Training and Testing Loss Over Epochs')
+plt.legend()
+plt.show()

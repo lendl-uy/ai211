@@ -4,7 +4,7 @@
 DATASET_PATH = "english-german-both.pkl"
 
 # Training constants
-EPOCHS = 1
+EPOCHS = 20
 BATCH_SIZE = 32 # 32 original value
 TRAIN_PERCENTAGE = 0.7
 DROPOUT_PERCENT = 0.1
