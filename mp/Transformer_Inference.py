@@ -67,6 +67,8 @@ class Translator:
         self.model.output_linear_layer.weights = loaded_params['final_linear_weights']
         self.model.output_linear_layer.bias = loaded_params['final_linear_bias']
 
+        print(loaded_params['tgt_pos_embed'].shape)
+
 
     def tokenize (self, src_sentence):
         # Remove punctuations from the sentence
@@ -113,7 +115,7 @@ class Translator:
         dec_input = np.array([self.dec_vocab_token_to_index['<SOS>']], dtype=np.int32)[np.newaxis, :]
 
 
-        while dec_input[:,-1] != self.dec_vocab_token_to_index['<EOS>'] and len(dec_input) <= self.max_seq_length:
+        while dec_input[:,-1] != self.dec_vocab_token_to_index['<EOS>'] and dec_input.shape[1] <= self.max_seq_length:
             output_probs = self.model.forward(enc_input, dec_input)
 
             # Get the index of the class with the highest probability
@@ -135,7 +137,7 @@ class Translator:
 def main():
     translator = Translator()
     translator.load_model_params('mp/transformer_params.pkl')
-    translator.translate('Tom, trust your father.') # add your sentence here.
+    translator.translate('I am good.') # add your sentence here.
 
 
     
