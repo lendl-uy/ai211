@@ -67,6 +67,7 @@ class Translator:
         self.model.output_linear_layer.weights = loaded_params['final_linear_weights']
         self.model.output_linear_layer.bias = loaded_params['final_linear_bias']
 
+
     def tokenize (self, src_sentence):
         # Remove punctuations from the sentence
         src_sentence = src_sentence.translate(str.maketrans("", "", string.punctuation))
@@ -107,34 +108,34 @@ class Translator:
     def translate(self, src_sentence):
 
         print(f"Sentence: {src_sentence}")
-        print(self.model.target_embedding_layer.vocab_embedding.shape)
 
         enc_input = self.tokenize(src_sentence)
         dec_input = np.array([self.dec_vocab_token_to_index['<SOS>']], dtype=np.int32)[np.newaxis, :]
 
-        output_probs = self.model.forward(enc_input, dec_input)
 
-        print(self.dec_vocab_index_to_token)
-        print(output_probs.shape)
+        while dec_input[:,-1] != self.dec_vocab_token_to_index['<EOS>'] and len(dec_input) <= self.max_seq_length:
+            output_probs = self.model.forward(enc_input, dec_input)
 
-        # while dec_input[-1] != self.dec_vocab_token_to_index['<EOS>'] and len(dec_input) <= self.max_seq_length:
+            # Get the index of the class with the highest probability
+            predicted_class = np.argmax(output_probs, axis=-1)
+
+            # Append the predicted class to the decoder input
+            dec_input = np.concatenate([dec_input, predicted_class[:, -1:]], axis=-1)
 
 
-        # Get the index of the class with the highest probability
-        predicted_class = np.argmax(output_probs, axis=-1)
-        predicted_seqs = self.idx_to_seq(predicted_class)
-        print(f'Predicted Indices: \n{predicted_class}\n')
-        print(f'Predicted Sequences:')
-        for seq in predicted_seqs:
-            print(seq)
+        # Convert the predicted sequence to tokens
+        predicted_seqs = self.idx_to_seq(dec_input)
 
-        print(f'Translation: {seq}')
+        # Join the tokens to form the translation
+        translation = ' '.join(predicted_seqs)
+
+        print(f'Translation: {translation}')
 
 
 def main():
     translator = Translator()
     translator.load_model_params('mp/transformer_params.pkl')
-    translator.translate('Give tom one object.')
+    translator.translate('Tom, trust your father.')
 
 
     
