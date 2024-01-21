@@ -1,3 +1,5 @@
-hw9/Gradient_Descent_Old.py
 .DS_Store
-hw8/__pycache__/NeuralNetwork.cpython-311.pyc
+hw8/__pycache__/
+hw9/__pycache__/
+hw9/Gradient_Descent_Old.py
+mp/__pycache__/
